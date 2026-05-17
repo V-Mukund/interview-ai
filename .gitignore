@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+*.db
+*.sqlite
+.next/
+out/
+build/
+dist/
+.DS_Store
+*.log
+docker-compose.override.yml

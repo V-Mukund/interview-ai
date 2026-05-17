@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── SMOOTH THEME TRANSITION ─────────────────────────────────── */
+*, *::before, *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease, box-shadow 0.3s ease;
+}
+
+/* ─── DARK THEME (default) ─────────────────────────────────────── */
+:root,
+html.dark {
+  --bg-base:        #050505;
+  --bg-surface:     #0a0a0a;
+  --bg-panel:       #080808;
+  --bg-card:        #0d0d0d;
+  --bg-input:       rgba(255,255,255,0.05);
+  --border:         rgba(255,255,255,0.06);
+  --border-strong:  rgba(255,255,255,0.12);
+  --text-primary:   #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted:     #52525b;
+  --text-label:     #3f3f46;
+  --shadow-key:     0 25px 50px -12px rgba(0,0,0,0.8);
+  --scrollbar-track:#0a0a0a;
+  --scrollbar-thumb:#27272a;
+}
+
+/* ─── LIGHT THEME ──────────────────────────────────────────────── */
+html.light {
+  --bg-base:        #f4f6fb;
+  --bg-surface:     #ffffff;
+  --bg-panel:       #f0f2f8;
+  --bg-card:        #ffffff;
+  --bg-input:       rgba(0,0,0,0.04);
+  --border:         rgba(0,0,0,0.08);
+  --border-strong:  rgba(0,0,0,0.16);
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-label:     #94a3b8;
+  --shadow-key:     0 25px 50px -12px rgba(100,100,150,0.15);
+  --scrollbar-track:#f0f2f8;
+  --scrollbar-thumb:#cbd5e1;
+}
+
+/* ─── BASE STYLES ──────────────────────────────────────────────── */
+html, body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* ─── SCROLLBAR ────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb  { background: var(--scrollbar-thumb); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #7c3aed55; }
+
+/* ─── THEME UTILITY CLASSES ────────────────────────────────────── */
+.t-bg-base    { background-color: var(--bg-base)    !important; }
+.t-bg-surface { background-color: var(--bg-surface) !important; }
+.t-bg-panel   { background-color: var(--bg-panel)   !important; }
+.t-bg-card    { background-color: var(--bg-card)    !important; }
+.t-bg-input   { background-color: var(--bg-input)   !important; }
+.t-border     { border-color: var(--border)          !important; }
+.t-border-strong { border-color: var(--border-strong) !important; }
+.t-text       { color: var(--text-primary)           !important; }
+.t-text-sec   { color: var(--text-secondary)         !important; }
+.t-text-muted { color: var(--text-muted)             !important; }
+.t-text-label { color: var(--text-label)             !important; }
+
+/* ─── LIGHT THEME OVERRIDES ────────────────────────────────────── */
+html.light .light-invert-border { border-color: rgba(0,0,0,0.08) !important; }
+html.light .light-card-shadow   { box-shadow: 0 4px 24px rgba(100,100,180,0.08); }
+
+/* ─── SELECT & INPUT IN LIGHT ──────────────────────────────────── */
+html.light select,
+html.light input,
+html.light textarea {
+  color: #0f172a;
+  background-color: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.1);
+}
+
+html.light select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+/* ─── ANIMATE-IN UTILITY ───────────────────────────────────────── */
+@keyframes fade-in        { from { opacity: 0; } to { opacity: 1; } }
+@keyframes zoom-in-95     { from { transform: scale(.95); opacity:0; } to { transform: scale(1); opacity:1; } }
+@keyframes slide-in-bottom{ from { transform: translateY(8px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+@keyframes slide-in-right { from { transform: translateX(-10px); opacity:0; } to { transform: translateX(0); opacity:1; } }
+
+.animate-in { animation-fill-mode: both; }
+.fade-in        { animation: fade-in        0.4s ease; }
+.zoom-in        { animation: zoom-in-95     0.4s ease; }
+.zoom-in-95     { animation: zoom-in-95     0.4s ease; }
+.slide-in-from-bottom-2 { animation: slide-in-bottom 0.3s ease; }
+.slide-in-from-bottom-4 { animation: slide-in-bottom 0.5s ease; }
+.slide-in-from-left     { animation: slide-in-right  0.4s ease; }
+
+.duration-300   { animation-duration: 0.3s; }
+.duration-500   { animation-duration: 0.5s; }
+.duration-700   { animation-duration: 0.7s; }
+
+/* ─── SIDEBAR UTILITIES ────────────────────────────────────────── */
+.sidebar-item {
+  @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer border border-transparent;
+}
+
+.sidebar-item-active {
+  @apply bg-purple-600 text-white shadow-lg shadow-purple-900/20 border-purple-500/50;
+}
+
+.sidebar-item-hover:hover {
+  @apply bg-white/5 border-white/10;
+}
+
+html.light .sidebar-item-hover:hover {
+  @apply bg-black/5 border-black/10;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 10px;
+}
