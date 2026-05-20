@@ -6,7 +6,7 @@ import { ThemeProvider } from "./theme-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "INTERVIEW AI",
+  title: "FORGE Interview AI",
   description: "Master your interviews with AI-powered mock sessions",
 };
 

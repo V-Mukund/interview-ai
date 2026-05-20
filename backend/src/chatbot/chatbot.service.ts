@@ -2,32 +2,27 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Conversation } from './conversation.entity';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 @Injectable()
 export class ChatbotService {
   private readonly logger = new Logger(ChatbotService.name);
-  private aiClient: GoogleGenerativeAI | null = null;
+  private groq: Groq | null = null;
 
   constructor(
     @InjectRepository(Conversation)
     private conversationRepository: Repository<Conversation>,
   ) {
-    // Initialize the Assessment Engine (under the hood)
-    const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY;
-    if (apiKey && apiKey !== 'ADD_YOUR_REAL_GEMINI_API_KEY_HERE') {
-      this.aiClient = new GoogleGenerativeAI(apiKey);
+    const apiKey = process.env.GROQ_API_KEY;
+    if (apiKey) {
+      this.groq = new Groq({ apiKey });
     }
   }
 
-  /**
-   * Generates a response using Gemini or a local fallback.
-   */
+ 
   async getResponse(message: string, role?: string, difficulty?: string): Promise<string> {
-    if (this.aiClient) {
+    if (this.groq) {
       try {
-        const model = this.aiClient.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        
         let systemPrompt = "You are a helpful Technical Interview Assistant.";
         if (role) {
           systemPrompt += ` The candidate is preparing for a ${role} position.`;
@@ -37,8 +32,14 @@ export class ChatbotService {
         }
         systemPrompt += " Help them with technical questions, concepts, and advice. Keep answers concise and professional.";
 
-        const result = await model.generateContent(`${systemPrompt}\n\nCandidate: ${message}`);
-        return (await result.response).text().trim();
+        const chatCompletion = await this.groq.chat.completions.create({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message }
+          ],
+          model: 'llama-3.1-8b-instant',
+        });
+        return chatCompletion.choices[0]?.message?.content?.trim() || "";
       } catch (error: any) {
         this.logger.warn(`AI Chat failed (${error.message}). Falling back to local responses.`);
         // Fallback to local

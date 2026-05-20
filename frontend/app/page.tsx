@@ -72,14 +72,15 @@ export default function LoginPage() {
         >
           {/* Header */}
           <div className="text-center mb-10">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-purple-500/20">
               <Lock className="text-white" size={24} />
             </div>
+            <p className="text-xs font-black uppercase tracking-[4px] text-purple-500 mb-2">FORGE Interview AI</p>
             <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: 'var(--text-primary)' }}>
               {isRegister ? 'Create Account' : 'Welcome Back'}
             </h1>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              {isRegister ? 'Join our AI-powered platform' : 'Log in to continue to INTERVIEW AI'}
+              {isRegister ? 'Join our AI-powered interview platform' : 'Log in to continue to Forge'}
             </p>
           </div>
 
@@ -171,7 +172,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-[11px] mt-10 uppercase tracking-[3px] font-bold" style={{ color: 'var(--text-label)' }}>
-          Protected by INTERVIEW AI Secure
+          Protected by <span style={{ color: 'var(--text-primary)' }}>FORGE</span> Secure
         </p>
       </div>
     </main>

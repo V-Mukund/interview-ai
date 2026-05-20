@@ -6,10 +6,11 @@ import { ChatbotService } from './chatbot.service';
 import { ChatbotController } from './chatbot.controller';
 import { InterviewService } from './interview.service';
 import { InterviewController } from './interview.controller';
+import { DashboardController } from './dashboard.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Conversation, MockResult])],
   providers: [ChatbotService, InterviewService],
-  controllers: [ChatbotController, InterviewController],
+  controllers: [ChatbotController, InterviewController, DashboardController],
 })
 export class ChatbotModule {}

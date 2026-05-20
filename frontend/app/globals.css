@@ -2,61 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── SMOOTH THEME TRANSITION ─────────────────────────────────── */
+/* ─── SMOOTH THEME TRANSITION ────────────────────────────────────────── */
 *, *::before, *::after {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease, box-shadow 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+              color 0.2s ease, box-shadow 0.3s ease;
 }
 
-/* ─── DARK THEME (default) ─────────────────────────────────────── */
+/* ─── DARK THEME (default) ──────────────────────────────────────────── */
 :root,
 html.dark {
-  --bg-base:        #050505;
-  --bg-surface:     #0a0a0a;
-  --bg-panel:       #080808;
-  --bg-card:        #0d0d0d;
-  --bg-input:       rgba(255,255,255,0.05);
-  --border:         rgba(255,255,255,0.06);
-  --border-strong:  rgba(255,255,255,0.12);
-  --text-primary:   #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-muted:     #52525b;
-  --text-label:     #3f3f46;
-  --shadow-key:     0 25px 50px -12px rgba(0,0,0,0.8);
-  --scrollbar-track:#0a0a0a;
-  --scrollbar-thumb:#27272a;
+  --bg-base:            #050505;
+  --bg-surface:         #0a0a0a;
+  --bg-panel:           #080808;
+  --bg-card:            #111111;
+  --bg-input:           rgba(255,255,255,0.06);
+  --border:             rgba(255,255,255,0.08);
+  --border-strong:      rgba(255,255,255,0.14);
+  --text-primary:       #ffffff;
+  --text-secondary:     #d4d4d8;
+  --text-muted:         #71717a;
+  --text-label:         #52525b;
+  --shadow-key:         0 25px 50px -12px rgba(0,0,0,0.8);
+  --scrollbar-track:    #0a0a0a;
+  --scrollbar-thumb:    #27272a;
+  /* Component-specific tokens */
+  --question-bg:        rgba(255,255,255,0.04);
+  --question-text:      #ffffff;
+  --question-border:    rgba(255,255,255,0.08);
+  --input-bg:           rgba(255,255,255,0.05);
+  --input-text:         #ffffff;
+  --input-placeholder:  #71717a;
+  --input-border:       rgba(255,255,255,0.08);
+  --input-focus-bg:     rgba(255,255,255,0.07);
+  --nav-btn-bg:         rgba(255,255,255,0.04);
+  --nav-btn-border:     rgba(255,255,255,0.08);
+  --nav-btn-text:       #e4e4e7;
+  --progress-bg:        rgba(255,255,255,0.05);
+  --card-hover-bg:      rgba(255,255,255,0.02);
 }
 
-/* ─── LIGHT THEME ──────────────────────────────────────────────── */
+/* ─── LIGHT THEME ───────────────────────────────────────────────────── */
 html.light {
-  --bg-base:        #f4f6fb;
-  --bg-surface:     #ffffff;
-  --bg-panel:       #f0f2f8;
-  --bg-card:        #ffffff;
-  --bg-input:       rgba(0,0,0,0.04);
-  --border:         rgba(0,0,0,0.08);
-  --border-strong:  rgba(0,0,0,0.16);
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-muted:     #94a3b8;
-  --text-label:     #94a3b8;
-  --shadow-key:     0 25px 50px -12px rgba(100,100,150,0.15);
-  --scrollbar-track:#f0f2f8;
-  --scrollbar-thumb:#cbd5e1;
+  --bg-base:            #f4f6fb;
+  --bg-surface:         #ffffff;
+  --bg-panel:           #f0f2f8;
+  --bg-card:            #ffffff;
+  --bg-input:           rgba(0,0,0,0.04);
+  --border:             rgba(0,0,0,0.08);
+  --border-strong:      rgba(0,0,0,0.16);
+  --text-primary:       #0f172a;
+  --text-secondary:     #334155;
+  --text-muted:         #64748b;
+  --text-label:         #94a3b8;
+  --shadow-key:         0 25px 50px -12px rgba(100,100,150,0.15);
+  --scrollbar-track:    #f0f2f8;
+  --scrollbar-thumb:    #cbd5e1;
+  /* Component-specific tokens */
+  --question-bg:        #ffffff;
+  --question-text:      #0f172a;
+  --question-border:    rgba(0,0,0,0.08);
+  --input-bg:           #ffffff;
+  --input-text:         #0f172a;
+  --input-placeholder:  #94a3b8;
+  --input-border:       rgba(0,0,0,0.10);
+  --input-focus-bg:     #f8fafc;
+  --nav-btn-bg:         #f8fafc;
+  --nav-btn-border:     rgba(0,0,0,0.10);
+  --nav-btn-text:       #1e293b;
+  --progress-bg:        rgba(0,0,0,0.06);
+  --card-hover-bg:      rgba(0,0,0,0.02);
 }
 
-/* ─── BASE STYLES ──────────────────────────────────────────────── */
+/* ─── BASE STYLES ───────────────────────────────────────────────────── */
 html, body {
   background-color: var(--bg-base);
   color: var(--text-primary);
 }
 
-/* ─── SCROLLBAR ────────────────────────────────────────────────── */
+/* ─── SCROLLBAR ─────────────────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 6px; }
 ::-webkit-scrollbar-track  { background: var(--scrollbar-track); }
 ::-webkit-scrollbar-thumb  { background: var(--scrollbar-thumb); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #7c3aed55; }
 
-/* ─── THEME UTILITY CLASSES ────────────────────────────────────── */
+/* ─── CORE THEME UTILITY CLASSES ────────────────────────────────────── */
 .t-bg-base    { background-color: var(--bg-base)    !important; }
 .t-bg-surface { background-color: var(--bg-surface) !important; }
 .t-bg-panel   { background-color: var(--bg-panel)   !important; }
@@ -65,21 +94,94 @@ html, body {
 .t-border     { border-color: var(--border)          !important; }
 .t-border-strong { border-color: var(--border-strong) !important; }
 .t-text       { color: var(--text-primary)           !important; }
+.t-text-pri   { color: var(--text-primary)           !important; }
 .t-text-sec   { color: var(--text-secondary)         !important; }
 .t-text-muted { color: var(--text-muted)             !important; }
 .t-text-label { color: var(--text-label)             !important; }
 
-/* ─── LIGHT THEME OVERRIDES ────────────────────────────────────── */
+/* ─── QUESTION BOX — theme-safe ─────────────────────────────────────── */
+/* Use this class on the question prompt container */
+.t-question-box {
+  background-color: var(--question-bg) !important;
+  border-color: var(--question-border) !important;
+}
+html.light .t-question-box {
+  box-shadow: 0 2px 16px rgba(100,100,180,0.07);
+}
+
+/* Text inside question box */
+.t-question-text {
+  color: var(--question-text) !important;
+}
+
+/* ─── INPUT / TEXTAREA — theme-safe ─────────────────────────────────── */
+/* Use this class on all textarea and input elements */
+.t-input {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border-color: var(--input-border) !important;
+}
+.t-input::placeholder {
+  color: var(--input-placeholder) !important;
+  opacity: 1;
+}
+.t-input:focus {
+  background-color: var(--input-focus-bg) !important;
+}
+html.light .t-input {
+  box-shadow: 0 1px 8px rgba(100,100,180,0.06);
+}
+
+/* ─── NAV BUTTONS — theme-safe ──────────────────────────────────────── */
+.t-nav-btn {
+  background-color: var(--nav-btn-bg) !important;
+  border-color: var(--nav-btn-border) !important;
+  color: var(--nav-btn-text) !important;
+  font-weight: 600;
+}
+.t-nav-btn:hover:not(:disabled) {
+  background-color: var(--bg-input) !important;
+}
+.t-nav-btn:disabled {
+  opacity: 0.3;
+}
+
+/* ─── PROGRESS TRACK — theme-safe ───────────────────────────────────── */
+.t-progress-track {
+  background-color: var(--progress-bg) !important;
+}
+
+/* ─── CARD HOVER — theme-safe ───────────────────────────────────────── */
+.t-card-hover:hover {
+  background-color: var(--card-hover-bg) !important;
+}
+
+/* ─── LIGHT THEME CARD SHADOW ───────────────────────────────────────── */
 html.light .light-invert-border { border-color: rgba(0,0,0,0.08) !important; }
 html.light .light-card-shadow   { box-shadow: 0 4px 24px rgba(100,100,180,0.08); }
 
-/* ─── SELECT & INPUT IN LIGHT ──────────────────────────────────── */
+/* ─── GLOBAL SELECT / INPUT IN LIGHT ────────────────────────────────── */
 html.light select,
-html.light input,
-html.light textarea {
+html.light input {
   color: #0f172a;
-  background-color: rgba(0,0,0,0.04);
-  border-color: rgba(0,0,0,0.1);
+  background-color: #ffffff;
+  border-color: rgba(0,0,0,0.10);
+}
+html.light textarea {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: rgba(0,0,0,0.10) !important;
+}
+html.dark select,
+html.dark input {
+  color: #ffffff;
+  background-color: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+}
+html.dark textarea {
+  color: #ffffff !important;
+  background-color: rgba(255,255,255,0.05) !important;
+  border-color: rgba(255,255,255,0.08) !important;
 }
 
 html.light select option {
@@ -87,25 +189,25 @@ html.light select option {
   color: #0f172a;
 }
 
-/* ─── ANIMATE-IN UTILITY ───────────────────────────────────────── */
-@keyframes fade-in        { from { opacity: 0; } to { opacity: 1; } }
-@keyframes zoom-in-95     { from { transform: scale(.95); opacity:0; } to { transform: scale(1); opacity:1; } }
-@keyframes slide-in-bottom{ from { transform: translateY(8px); opacity:0; } to { transform: translateY(0); opacity:1; } }
-@keyframes slide-in-right { from { transform: translateX(-10px); opacity:0; } to { transform: translateX(0); opacity:1; } }
+/* ─── ANIMATE-IN UTILITIES ──────────────────────────────────────────── */
+@keyframes fade-in         { from { opacity: 0; }               to { opacity: 1; } }
+@keyframes zoom-in-95      { from { transform: scale(.95); opacity:0; } to { transform: scale(1); opacity:1; } }
+@keyframes slide-in-bottom { from { transform: translateY(8px);  opacity:0; } to { transform: translateY(0); opacity:1; } }
+@keyframes slide-in-right  { from { transform: translateX(-10px); opacity:0; } to { transform: translateX(0); opacity:1; } }
 
 .animate-in { animation-fill-mode: both; }
-.fade-in        { animation: fade-in        0.4s ease; }
-.zoom-in        { animation: zoom-in-95     0.4s ease; }
-.zoom-in-95     { animation: zoom-in-95     0.4s ease; }
+.fade-in                { animation: fade-in         0.4s ease; }
+.zoom-in                { animation: zoom-in-95      0.4s ease; }
+.zoom-in-95             { animation: zoom-in-95      0.4s ease; }
 .slide-in-from-bottom-2 { animation: slide-in-bottom 0.3s ease; }
 .slide-in-from-bottom-4 { animation: slide-in-bottom 0.5s ease; }
 .slide-in-from-left     { animation: slide-in-right  0.4s ease; }
 
-.duration-300   { animation-duration: 0.3s; }
-.duration-500   { animation-duration: 0.5s; }
-.duration-700   { animation-duration: 0.7s; }
+.duration-300 { animation-duration: 0.3s; }
+.duration-500 { animation-duration: 0.5s; }
+.duration-700 { animation-duration: 0.7s; }
 
-/* ─── SIDEBAR UTILITIES ────────────────────────────────────────── */
+/* ─── SIDEBAR UTILITIES ─────────────────────────────────────────────── */
 .sidebar-item {
   @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer border border-transparent;
 }
@@ -115,21 +217,17 @@ html.light select option {
 }
 
 .sidebar-item-hover:hover {
-  @apply bg-white/5 border-white/10;
+  background-color: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.10);
 }
-
 html.light .sidebar-item-hover:hover {
-  @apply bg-black/5 border-black/10;
+  background-color: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.10);
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+/* ─── CUSTOM SCROLLBAR ──────────────────────────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar       { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 10px;

@@ -24,6 +24,12 @@ export class MockResult {
   @Column('int')
   score: number;
 
+  @Column({ type: 'int', default: 0 })
+  accuracy: number;
+
+  @Column({ type: 'varchar', default: 'completed' })
+  status: string;
+
   @CreateDateColumn()
   timestamp: Date;
 
