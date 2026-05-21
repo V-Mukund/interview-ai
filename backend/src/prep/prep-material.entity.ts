@@ -23,8 +23,26 @@ export class PrepMaterial {
   @Column('text')
   content: string;
 
+  @Column('text', { nullable: true })
+  overview: string;
+
+  @Column('simple-json', { nullable: true })
+  coreConcepts: any;
+
   @Column('simple-json', { nullable: true })
   questions: any;
+
+  @Column('simple-json', { nullable: true })
+  interviewQuestions: any;
+
+  @Column('simple-json', { nullable: true })
+  practiceQuestions: any;
+
+  @Column('simple-json', { nullable: true })
+  keyPoints: any;
+
+  @Column('simple-json', { nullable: true })
+  tips: any;
 
   @Column('simple-json', { nullable: true })
   answers: any;

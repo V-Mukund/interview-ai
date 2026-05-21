@@ -78,7 +78,6 @@ export default function PrepDashboard() {
 
   useEffect(() => {
     let result = materials;
-    if (selectedCategory !== 'All') result = result.filter(m => m.category === selectedCategory);
     if (selectedDifficulty !== 'All') result = result.filter(m => m.difficulty === selectedDifficulty);
     if (selectedCompany !== 'All') result = result.filter(m => m.company === selectedCompany);
     if (selectedRole !== 'All') result = result.filter(m => m.role === selectedRole);
@@ -88,7 +87,7 @@ export default function PrepDashboard() {
       result = result.filter(m => m.title.toLowerCase().includes(s) || m.content.toLowerCase().includes(s));
     }
     setFilteredMaterials(result);
-  }, [search, selectedCategory, selectedDifficulty, selectedCompany, selectedRole, materials]);
+  }, [search, selectedDifficulty, selectedCompany, selectedRole, materials]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -236,88 +235,17 @@ export default function PrepDashboard() {
       )}
 
       {/* Header & Stats */}
-      <div className="flex flex-col lg:flex-row gap-6 mb-6 shrink-0 mt-4 px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 shrink-0 mt-4 px-4 sm:px-6 lg:px-8">
         <div className="flex-1">
-          <h2 className="text-3xl font-black tracking-tight"><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Learning Center</span></h2>
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight"><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Learning Center</span></h2>
           <p className="text-neutral-400 text-sm mt-1 font-medium">Master concepts, take notes, and track your prep journey.</p>
         </div>
-
-        <div className="flex gap-4">
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4 min-w-[160px]">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
-              <Zap size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest">Study Streak</p>
-              <h3 className="text-xl font-black text-white">{progress.streak} <span className="text-xs text-neutral-500 font-medium">days</span></h3>
-            </div>
-          </div>
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4 min-w-[200px]">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
-              <BookOpen size={20} />
-            </div>
-            <div className="w-full">
-              <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest">Completion</p>
-              <div className="flex items-center gap-2">
-                <div className="h-2 flex-1 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500" style={{ width: `${progress.percentage}%` }} />
-                </div>
-                <span className="text-xs font-black text-white">{progress.percentage}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Search & Categories */}
-      <div className="px-6 lg:px-8 mb-4 shrink-0 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
-          <input 
-            type="text" 
-            placeholder="Search topics, questions, companies..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all shadow-inner"
-          />
-        </div>
-        
-        <div className="flex gap-3">
-          <select 
-            value={selectedDifficulty} 
-            onChange={e => setSelectedDifficulty(e.target.value)}
-            className="px-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-purple-500/50"
-            style={{ colorScheme: 'dark' }}
-          >
-            {difficulties.map(d => <option key={d} value={d} style={{ background: '#171717', color: '#fff' }}>{d}</option>)}
-          </select>
-          <select 
-            value={selectedRole} 
-            onChange={e => setSelectedRole(e.target.value)}
-            className="px-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-purple-500/50 hidden md:block"
-            style={{ colorScheme: 'dark' }}
-          >
-            {roles.map(r => <option key={r} value={r} style={{ background: '#171717', color: '#fff' }}>{r}</option>)}
-          </select>
-        </div>
-      </div>
-
-      <div className="px-6 lg:px-8 mb-6 shrink-0">
-        <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-          {categories.map(cat => (
-            <button 
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${selectedCategory === cat ? 'bg-white/10 border-white/20 text-white' : 'bg-transparent border-transparent text-neutral-400 hover:bg-white/5 hover:text-neutral-300'}`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Categories removed, displaying sequentially */}
 
       {/* Materials Grid */}
-      <div className="flex-1 overflow-y-auto px-6 lg:px-8 pb-12 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-12 custom-scrollbar">
         {isLoading ? (
           <div className="flex justify-center items-center h-40">
             <Loader2 className="animate-spin text-purple-500" size={32} />
@@ -328,47 +256,61 @@ export default function PrepDashboard() {
             <p className="font-bold">No materials found for the selected filters.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredMaterials.map(mat => (
-              <div 
-                key={mat.id} 
-                onClick={() => handleOpenMaterial(mat)}
-                className="group cursor-pointer rounded-3xl bg-neutral-900/50 border border-white/10 p-1 flex flex-col hover:border-purple-500/30 transition-all duration-300 shadow-xl hover:shadow-purple-900/20 overflow-hidden"
-              >
-                <div className="p-5 flex-1 flex flex-col relative z-10">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="inline-flex px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                      {mat.category}
-                    </span>
-                    <button 
-                      onClick={(e) => handleToggleBookmark(e, mat.id)}
-                      className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                    >
-                      <Star size={16} className={isBookmarked(mat.id) ? 'fill-yellow-500 text-yellow-500' : 'text-neutral-500'} />
-                    </button>
+          <div className="flex flex-col gap-12">
+            {categories.filter(c => c !== 'All').map(cat => {
+              const categoryMaterials = filteredMaterials.filter(m => m.category === cat);
+              if (categoryMaterials.length === 0) return null;
+              return (
+                <div key={cat} className="flex flex-col gap-6">
+                  <div className="flex items-center gap-3 pb-2 border-b border-white/10">
+                    <h3 className="text-2xl font-black text-white">{cat}</h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-xs font-bold text-neutral-400">{categoryMaterials.length}</span>
                   </div>
-                  
-                  <h3 className="text-lg font-black text-white mb-2 leading-tight group-hover:text-purple-400 transition-colors">{mat.title}</h3>
-                  <p className="text-sm text-neutral-400 line-clamp-2 mb-6 flex-1 leading-relaxed">
-                    {mat.content.substring(0, 100)}...
-                  </p>
-                  
-                  <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-500">
-                        <Clock size={14} /> {mat.estimatedMinutes}m
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {categoryMaterials.map(mat => (
+                      <div 
+                        key={mat.id} 
+                        onClick={() => handleOpenMaterial(mat)}
+                        className="group cursor-pointer rounded-3xl bg-neutral-900/50 border border-white/10 p-1 flex flex-col hover:border-purple-500/30 transition-all duration-300 shadow-xl hover:shadow-purple-900/20 overflow-hidden"
+                      >
+                        <div className="p-5 flex-1 flex flex-col relative z-10">
+                          <div className="flex justify-between items-start mb-4">
+                            <span className="inline-flex px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                              {mat.category}
+                            </span>
+                            <button 
+                              onClick={(e) => handleToggleBookmark(e, mat.id)}
+                              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                            >
+                              <Star size={16} className={isBookmarked(mat.id) ? 'fill-yellow-500 text-yellow-500' : 'text-neutral-500'} />
+                            </button>
+                          </div>
+                          
+                          <h3 className="text-lg font-black text-white mb-2 leading-tight group-hover:text-purple-400 transition-colors">{mat.title}</h3>
+                          <p className="text-sm text-neutral-400 line-clamp-2 mb-6 flex-1 leading-relaxed">
+                            {mat.content.substring(0, 100)}...
+                          </p>
+                          
+                          <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-500">
+                                <Clock size={14} /> {mat.estimatedMinutes}m
+                              </div>
+                              <div className={`text-[10px] font-black uppercase tracking-widest ${mat.difficulty === 'Advanced' ? 'text-red-400' : mat.difficulty === 'Intermediate' ? 'text-amber-400' : 'text-green-400'}`}>
+                                {mat.difficulty}
+                              </div>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-purple-600 transition-colors">
+                              <Play size={14} className="text-white ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className={`text-[10px] font-black uppercase tracking-widest ${mat.difficulty === 'Advanced' ? 'text-red-400' : mat.difficulty === 'Intermediate' ? 'text-amber-400' : 'text-green-400'}`}>
-                        {mat.difficulty}
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-purple-600 transition-colors">
-                      <Play size={14} className="text-white ml-0.5" />
-                    </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -377,38 +319,38 @@ export default function PrepDashboard() {
       {selectedMaterial && (
         <div className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-sm flex justify-end">
           <div className="w-full max-w-3xl bg-neutral-950 border-l border-white/10 h-full overflow-y-auto flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
-            <div className="sticky top-0 bg-neutral-950/80 backdrop-blur-md z-10 border-b border-white/10 p-6 flex justify-between items-center">
-              <div>
+            <div className="sticky top-0 bg-neutral-950/80 backdrop-blur-md z-10 border-b border-white/10 p-4 sm:p-6 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+              <div className="min-w-0 flex-1">
                 <span className="text-[10px] text-purple-500 font-black uppercase tracking-widest">{selectedMaterial.category}</span>
-                <h2 className="text-2xl font-black text-white mt-1">{selectedMaterial.title}</h2>
+                <h2 className="text-xl sm:text-2xl font-black text-white mt-1 break-words">{selectedMaterial.title}</h2>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 self-end sm:self-auto">
                 <button 
                   onClick={() => handleMarkComplete(selectedMaterial.id)}
-                  className="px-4 py-2 rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 text-xs font-bold flex items-center gap-2 hover:bg-green-500/20 transition-all"
+                  className="px-4 py-2 rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 text-xs font-bold flex items-center gap-2 hover:bg-green-500/20 transition-all shrink-0"
                 >
                   <CheckCircle2 size={16} /> Mark Done
                 </button>
-                <button onClick={() => setSelectedMaterial(null)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 transition-colors">
+                <button onClick={() => setSelectedMaterial(null)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 transition-colors shrink-0">
                   <X size={20} />
                 </button>
               </div>
             </div>
 
-            <div className="p-8 flex-1">
+            <div className="p-4 sm:p-8 flex-1">
               {/* AI Features Bar */}
-              <div className="p-1.5 rounded-2xl bg-neutral-900 border border-white/10 inline-flex gap-1 mb-8 shadow-inner flex-wrap">
+              <div className="p-1.5 rounded-2xl bg-neutral-900 border border-white/10 flex flex-col sm:inline-flex sm:flex-row gap-2 mb-8 shadow-inner">
                 <button 
                   onClick={() => handleAiAction('explain')}
                   disabled={aiLoading}
-                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white flex items-center gap-2 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-50 w-full sm:w-auto"
                 >
                   <BrainCircuit size={14} className="text-purple-400" /> Explain with AI
                 </button>
                 <button 
                   onClick={() => handleAiAction('cheatsheet')}
                   disabled={aiLoading}
-                  className="px-4 py-2 rounded-xl hover:bg-white/10 text-xs font-bold text-neutral-400 flex items-center gap-2 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl hover:bg-white/10 text-xs font-bold text-neutral-400 flex items-center justify-center gap-2 transition-colors disabled:opacity-50 w-full sm:w-auto"
                 >
                   <FileText size={14} /> Generate Cheat Sheet
                 </button>
@@ -437,7 +379,7 @@ export default function PrepDashboard() {
                 
                 {activeQuestions && activeQuestions.length > 0 && (
                   <div className="mt-12 border-t border-white/10 pt-8">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                       <h3 className="text-xl font-black text-white m-0">Practice Questions</h3>
                       <div className="flex gap-2">
                         <button onClick={handleShuffleQuestions} className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-bold text-neutral-300 transition-colors">

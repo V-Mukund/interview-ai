@@ -134,13 +134,13 @@ function ResultContent() {
   if (!parsedEvaluation && !rawFallback) return null;
 
   return (
-    <div className="min-h-screen h-screen flex flex-col t-bg-base t-text-pri overflow-hidden p-4 gap-4 font-sans relative selection:bg-purple-500/30">
+    <div className="min-h-screen h-auto lg:h-screen flex flex-col t-bg-base t-text-pri lg:overflow-hidden overflow-y-auto p-4 gap-4 font-sans relative selection:bg-purple-500/30">
       
       {/* 1. COMPACT HEADER NAVBAR */}
-      <header className="flex justify-between items-center border-b t-border pb-3 shrink-0">
+      <header className="flex flex-col md:flex-row md:justify-between md:items-center border-b t-border pb-3 shrink-0 gap-4">
         <div className="space-y-0.5">
           <p className="text-[10px] font-black uppercase tracking-[3px] text-purple-500">FORGE Interview AI</p>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-xl lg:text-2xl font-black tracking-tight leading-none">
               {parsedEvaluation?.company && parsedEvaluation?.role 
                 ? `${parsedEvaluation.company.charAt(0).toUpperCase() + parsedEvaluation.company.slice(1)} - ${parsedEvaluation.role}` 
@@ -157,7 +157,7 @@ function ResultContent() {
             </p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => router.push('/chatbot?tab=history')}
             className="px-3.5 py-2 bg-purple-50 dark:bg-purple-650/15 border border-purple-300 dark:border-purple-500/20 text-purple-700 dark:text-purple-400 rounded-xl font-bold hover:bg-purple-100 dark:hover:bg-purple-650 hover:text-purple-800 dark:hover:text-white transition-all flex items-center gap-1.5 text-xs cursor-pointer shadow-sm"
@@ -181,10 +181,10 @@ function ResultContent() {
 
       {/* 2. DYNAMIC CONTENT MAIN GRID */}
       {parsedEvaluation ? (
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden relative">
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 lg:overflow-hidden overflow-y-auto relative">
           
           {/* LEFT SIDEBAR: OVERALL SCORE & SUMMARY (w-72) */}
-          <aside className="w-72 shrink-0 flex flex-col gap-4 min-h-0 overflow-hidden">
+          <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-4 min-h-0 lg:overflow-hidden">
             
             {/* Score Ring Summary */}
             <div className="p-4 rounded-[24px] bg-purple-600/5 border border-purple-500/20 flex flex-col items-center justify-center gap-3 shrink-0">
@@ -199,7 +199,7 @@ function ResultContent() {
             </div>
 
             {/* AI Final Recommendation Card */}
-            <div className="p-4 rounded-[24px] bg-white/[0.02] border t-border flex-1 min-h-0 overflow-hidden flex flex-col gap-2">
+            <div className="p-4 rounded-[24px] bg-white/[0.02] border t-border flex-1 min-h-[160px] lg:min-h-0 overflow-hidden flex flex-col gap-2">
               <h3 className="font-black uppercase tracking-wider text-[10px] flex items-center gap-1.5 text-purple-400 shrink-0">
                 <TrendingUp size={12} /> AI Recommendation
               </h3>
@@ -211,13 +211,13 @@ function ResultContent() {
           </aside>
 
           {/* RIGHT PANELS: ANALYTICS + QUESTION GRID (flex-1) */}
-          <main className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden">
+          <main className="flex-1 min-h-0 flex flex-col gap-4 lg:overflow-hidden">
             
             {/* TOP ROW: STRENGTHS & WEAK AREAS (h-[38%]) */}
-            <div className="h-[38%] min-h-0 flex flex-col md:flex-row gap-4 overflow-hidden">
+            <div className="h-auto lg:h-[38%] min-h-0 flex flex-col md:flex-row gap-4 lg:overflow-hidden">
               
               {/* Strengths Card */}
-              <div className="flex-1 p-4 rounded-[24px] bg-green-500/5 border border-green-500/20 flex flex-col gap-2 min-h-0 overflow-hidden">
+              <div className="flex-1 p-4 rounded-[24px] bg-green-500/5 border border-green-500/20 flex flex-col gap-2 min-h-[180px] lg:min-h-0 lg:overflow-hidden">
                 <h3 className="font-black uppercase tracking-wider text-[10px] flex items-center gap-1.5 text-green-400 shrink-0">
                   <CheckCircle2 size={12} /> Key Strengths
                 </h3>
@@ -234,7 +234,7 @@ function ResultContent() {
               </div>
 
               {/* Weak Areas Card */}
-              <div className="flex-1 p-4 rounded-[24px] bg-amber-500/5 border border-amber-500/20 flex flex-col gap-2 min-h-0 overflow-hidden">
+              <div className="flex-1 p-4 rounded-[24px] bg-amber-500/5 border border-amber-500/20 flex flex-col gap-2 min-h-[180px] lg:min-h-0 lg:overflow-hidden">
                 <h3 className="font-black uppercase tracking-wider text-[10px] flex items-center gap-1.5 text-amber-400 shrink-0">
                   <AlertCircle size={12} /> Areas to Improve
                 </h3>
@@ -253,12 +253,12 @@ function ResultContent() {
             </div>
 
             {/* BOTTOM ROW: 5 QUESTION CARDS GRID (h-[62%]) */}
-            <div className="h-[62%] min-h-0 flex flex-col gap-2 overflow-hidden">
+            <div className="h-auto lg:h-[62%] min-h-0 flex flex-col gap-2 lg:overflow-hidden">
               <h3 className="text-[10px] font-black uppercase tracking-wider text-purple-400 shrink-0 flex items-center gap-1.5">
                 <Cpu size={12} /> Question Breakdown
               </h3>
               
-              <div className="grid grid-cols-5 gap-3 flex-1 min-h-0 overflow-hidden">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 flex-1 min-h-0 lg:overflow-hidden">
                 {(Array.isArray(parsedEvaluation?.questionWiseFeedback) ? parsedEvaluation.questionWiseFeedback : []).map((qf: any, i: number) => {
                   const score = qf?.score ?? 0;
                   const scoreColor = score >= 8 ? 'text-green-400' : score >= 5 ? 'text-amber-400' : 'text-red-400';
@@ -325,7 +325,7 @@ function ResultContent() {
       {/* 3. DETAIL OVERLAY MODAL */}
       {selectedQuestion && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-white/10 rounded-[32px] max-w-2xl w-full p-6 flex flex-col max-h-[85vh] overflow-hidden shadow-2xl relative">
+          <div className="bg-neutral-950 border border-white/10 rounded-[24px] sm:rounded-[32px] max-w-2xl w-full p-4 sm:p-6 flex flex-col max-h-[85vh] overflow-hidden shadow-2xl relative">
             
             {/* Top Close Button */}
             <button 
@@ -425,7 +425,7 @@ function ResultContent() {
               </div>
 
               {/* Evaluation Criteria Badges */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {selectedQuestion.communicationClarity && (
                   <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
                     <MessageSquare size={10} /> Clarity: {selectedQuestion.communicationClarity}

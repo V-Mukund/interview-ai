@@ -607,6 +607,7 @@ export default function ChatbotPage() {
                 setShowProfile(false); 
                 setShowHistory(false);
                 setShowPrepMaterials(false);
+                setIsSidebarOpen(false);
               }}
               className={`sidebar-item ${!activeThreadId && wizardStep === 0 && !showSettings && !showProfile && !showHistory && !showPrepMaterials ? 'sidebar-item-active' : 'sidebar-item-hover t-text-sec hover:t-text'}`}
             >
@@ -615,7 +616,7 @@ export default function ChatbotPage() {
             </button>
 
             <button 
-              onClick={() => { startNewChat(); setIsMockMode(true); setShowHistory(false); setShowPrepMaterials(false); }}
+              onClick={() => { startNewChat(); setIsMockMode(true); setShowHistory(false); setShowPrepMaterials(false); setIsSidebarOpen(false); }}
               className={`sidebar-item ${wizardStep > 0 && !activeThreadId && !showSettings && !showProfile && !showHistory && !showPrepMaterials ? 'sidebar-item-active' : 'sidebar-item-hover t-text-sec hover:t-text'}`}
             >
               <Award size={20} />
@@ -630,6 +631,7 @@ export default function ChatbotPage() {
                 setShowSettings(false);
                 setWizardStep(0);
                 setActiveThreadId(null);
+                setIsSidebarOpen(false);
               }}
               className={`sidebar-item ${showPrepMaterials ? 'bg-purple-600/10 text-purple-500' : 'sidebar-item-hover t-text-sec hover:t-text'}`}
             >
@@ -646,6 +648,7 @@ export default function ChatbotPage() {
                 setWizardStep(0);
                 setActiveThreadId(null);
                 if (!showHistory) fetchCompletedInterviews();
+                setIsSidebarOpen(false);
               }}
               className={`sidebar-item ${showHistory ? 'bg-purple-600/10 text-purple-500' : 'sidebar-item-hover t-text-sec hover:t-text'}`}
             >
@@ -654,7 +657,7 @@ export default function ChatbotPage() {
             </button>
 
             <button 
-              onClick={() => { setShowSettings(!showSettings); setShowHistory(false); setShowPrepMaterials(false); setShowProfile(false); }}
+              onClick={() => { setShowSettings(!showSettings); setShowHistory(false); setShowPrepMaterials(false); setShowProfile(false); setIsSidebarOpen(false); }}
               className={`sidebar-item ${showSettings ? 'bg-purple-600/10 text-purple-500' : 'sidebar-item-hover t-text-sec hover:t-text'}`}
             >
               <Settings size={20} />
@@ -721,7 +724,7 @@ export default function ChatbotPage() {
             <div className="absolute bottom-20 left-4 right-4 bg-[#0f0f0f] border border-white/10 rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 z-[100] backdrop-blur-xl">
               <div className="p-2">
                 <button 
-                  onClick={() => { setShowProfile(true); setShowProfileDropdown(false); }}
+                  onClick={() => { setShowProfile(true); setShowProfileDropdown(false); setIsSidebarOpen(false); }}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-sm font-medium text-neutral-300"
                 >
                   <User size={18} className="text-purple-500" /> View Profile
@@ -1552,11 +1555,11 @@ export default function ChatbotPage() {
             </header>
 
             {/* Dashboard Content Container */}
-            <div className="flex-1 p-4 overflow-hidden flex flex-col min-h-0 bg-gradient-to-b from-transparent to-black/10">
-              <div className="grid grid-cols-12 gap-4 h-full min-h-0 overflow-hidden">
+            <div className="flex-1 p-4 overflow-y-auto lg:overflow-hidden flex flex-col min-h-0 bg-gradient-to-b from-transparent to-black/10">
+              <div className="grid grid-cols-12 gap-4 h-auto lg:h-full min-h-0 lg:overflow-hidden">
                 
                 {/* LEFT COLUMN: Profile & Performance (col-span-3) */}
-                <div className="col-span-3 flex flex-col gap-4 min-h-0 h-full overflow-hidden">
+                <div className="col-span-12 md:col-span-4 lg:col-span-3 flex flex-col gap-4 min-h-0 h-auto lg:h-full lg:overflow-hidden">
                   
                   {/* User Profile Summary Card */}
                   <div className="p-4 rounded-[24px] bg-white/2 border t-border flex flex-col gap-3 shrink-0 relative overflow-hidden" style={{ borderColor: 'var(--border)' }}>
@@ -1583,7 +1586,7 @@ export default function ChatbotPage() {
                   </div>
 
                   {/* Performance Overview Card */}
-                  <div className="p-4 rounded-[24px] bg-purple-600/5 border border-purple-500/20 flex-1 min-h-0 overflow-hidden flex flex-col justify-between gap-3">
+                  <div className="p-4 rounded-[24px] bg-purple-600/5 border border-purple-500/20 flex-1 min-h-[220px] lg:min-h-0 overflow-hidden flex flex-col justify-between gap-3">
                     <div className="space-y-2 flex-1 flex flex-col items-center justify-center min-h-0">
                       <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider text-center shrink-0">Assessment Accuracy</p>
                       {/* Compact Circular Progress Ring */}
@@ -1612,13 +1615,13 @@ export default function ChatbotPage() {
                 </div>
 
                 {/* CENTER COLUMN: Interview Activity Analytics (col-span-5) */}
-                <div className="col-span-5 flex flex-col gap-4 min-h-0 h-full overflow-hidden animate-in slide-in-from-bottom-2 duration-300">
+                <div className="col-span-12 md:col-span-8 lg:col-span-5 flex flex-col gap-4 min-h-0 h-auto lg:h-full lg:overflow-hidden animate-in slide-in-from-bottom-2 duration-300">
                   
                   {/* 2x2 Interview Activity Statistics Cards */}
-                  <div className="grid grid-cols-2 gap-4 shrink-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
                     
                     {/* CARD 1: Total Mocks Completed */}
-                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between h-[84px] hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
+                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between min-h-[84px] h-auto py-3 hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
                       <div className="flex justify-between items-start">
                         <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider">Total Interviews</p>
                         <span className="text-sm font-black px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/10 shrink-0">
@@ -1632,7 +1635,7 @@ export default function ChatbotPage() {
                     </div>
 
                     {/* CARD 2: Weekly Mocks */}
-                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between h-[84px] hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
+                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between min-h-[84px] h-auto py-3 hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
                       <div className="flex justify-between items-start">
                         <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider">Weekly Mocks</p>
                         <span className="text-sm font-black px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/10 shrink-0">
@@ -1646,7 +1649,7 @@ export default function ChatbotPage() {
                     </div>
 
                     {/* CARD 3: Today's Mocks */}
-                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between h-[84px] hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
+                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between min-h-[84px] h-auto py-3 hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
                       <div className="flex justify-between items-start">
                         <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider">Today's Mocks</p>
                         <span className={`text-sm font-black px-1.5 py-0.5 rounded shrink-0 ${dashboardStats.todayInterviews > 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/10' : 'bg-white/5 text-neutral-500'}`}>
@@ -1660,7 +1663,7 @@ export default function ChatbotPage() {
                     </div>
 
                     {/* CARD 4: Frequency Rate */}
-                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between h-[84px] hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
+                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between min-h-[84px] h-auto py-3 hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
                       <div className="flex justify-between items-start">
                         <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider">Mock Frequency</p>
                         <span className="text-sm font-black px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/10 shrink-0">
@@ -1678,7 +1681,7 @@ export default function ChatbotPage() {
                   {/* Activity Graph Widget */}
                   <div 
                     onClick={() => setShowPercentagesInWeeklyStats(!showPercentagesInWeeklyStats)}
-                    className="flex-1 flex flex-col min-h-0 bg-white/2 border t-border p-4 rounded-[28px] overflow-hidden justify-between cursor-pointer hover:border-purple-500/30 transition-all select-none" 
+                    className="flex-1 flex flex-col min-h-[260px] lg:min-h-0 bg-white/2 border t-border p-4 rounded-[28px] overflow-hidden justify-between cursor-pointer hover:border-purple-500/30 transition-all select-none" 
                     style={{ borderColor: 'var(--border)' }}
                   >
                     <div className="flex justify-between items-center shrink-0">
@@ -1749,7 +1752,7 @@ export default function ChatbotPage() {
                 </div>
 
                 {/* RIGHT COLUMN: Timeline & Quick Setup (col-span-4) */}
-                <div className="col-span-4 flex flex-col gap-4 min-h-0 h-full overflow-hidden">
+                <div className="col-span-12 md:col-span-12 lg:col-span-4 flex flex-col gap-4 min-h-0 h-auto lg:h-full lg:overflow-hidden">
                   
                   {/* Recent Activity Timeline */}
                   <div 
@@ -1761,7 +1764,7 @@ export default function ChatbotPage() {
                       setActiveThreadId(null);
                       fetchCompletedInterviews();
                     }}
-                    className="flex-1 flex flex-col min-h-0 bg-white/2 border t-border p-4 rounded-[28px] overflow-hidden cursor-pointer hover:border-purple-500/30 transition-all" 
+                    className="flex-1 flex flex-col min-h-[280px] lg:min-h-0 bg-white/2 border t-border p-4 rounded-[28px] overflow-hidden cursor-pointer hover:border-purple-500/30 transition-all" 
                     style={{ borderColor: 'var(--border)' }}
                   >
                     <div className="flex items-center gap-1.5 shrink-0 pb-2 border-b border-white/5">
@@ -1821,7 +1824,7 @@ export default function ChatbotPage() {
                   </div>
 
                   {/* QUICK ASSESSMENT SETUP CARD */}
-                  <div className="bg-gradient-to-br from-purple-600/5 to-blue-600/5 rounded-[24px] border border-purple-500/15 p-4 flex flex-col justify-between shrink-0 h-[196px] overflow-hidden">
+                  <div className="bg-gradient-to-br from-purple-600/5 to-blue-600/5 rounded-[24px] border border-purple-500/15 p-4 flex flex-col justify-between shrink-0 min-h-[196px] h-auto py-4 overflow-hidden">
                     <div>
                       <h3 className="font-bold text-xs flex items-center gap-1 text-purple-400 shrink-0">
                         <Sparkles size={14} /> Quick Assessment
@@ -2012,7 +2015,7 @@ export default function ChatbotPage() {
                 <div className="flex items-center gap-6"><div className="w-48 h-1.5 bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-purple-500 to-blue-500" style={{ width: `${(mockStep / 5) * 100}%` }} /></div><div className="px-4 py-2 rounded-xl bg-purple-600/10 border border-purple-500/20 text-purple-500 text-sm font-black uppercase">Question {mockStep}/5</div></div>
               )}
             </header>
-            <div className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-8 scroll-smooth custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-12 space-y-6 sm:space-y-8 scroll-smooth custom-scrollbar">
               {mockState === 'finished' && mockReport ? (
                 /* MOCK REPORT VIEW */
                 <div className="max-w-4xl mx-auto space-y-12 animate-in zoom-in duration-700 pb-20">
@@ -2026,12 +2029,12 @@ export default function ChatbotPage() {
                     <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-sm font-black uppercase tracking-widest">
                       <Award size={14} /> Interview Completed Successfully
                     </div>
-                    <h2 className="text-5xl font-black tracking-tight">Final <span className="text-purple-500">Performance</span> Report</h2>
+                    <h2 className="text-3xl sm:text-5xl font-black tracking-tight">Final <span className="text-purple-500">Performance</span> Report</h2>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-2 p-10 rounded-[48px] t-bg-card border t-border-strong shadow-2xl space-y-10">
-                      <div className="grid grid-cols-2 gap-8">
+                    <div className="md:col-span-2 p-5 sm:p-10 rounded-[32px] sm:rounded-[48px] t-bg-card border t-border-strong shadow-2xl space-y-10">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                         <div>
                           <p className="text-sm t-text-muted font-black uppercase tracking-widest mb-2">Total Score</p>
                           <p className="text-6xl font-black text-purple-500">{mockReport.match(/Total Score: ([\d/]+)/)?.[1] || '39/50'}</p>
@@ -2070,7 +2073,7 @@ export default function ChatbotPage() {
                     </div>
 
                     <div className="space-y-6">
-                      <div className="p-8 rounded-[40px] bg-green-500/5 border border-green-500/20 space-y-4">
+                      <div className="p-5 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-green-500/5 border border-green-500/20 space-y-4">
                         <h4 className="text-xs font-black uppercase tracking-widest text-green-500">Strengths</h4>
                         <div className="space-y-2">
                           {(mockReport.match(/Strengths([\s\S]+?)Areas to Improve/) || [null, "✔ Strong JavaScript\n✔ Good React fundamentals\n✔ Clear explanations"])[1]
@@ -2080,7 +2083,7 @@ export default function ChatbotPage() {
                         </div>
                       </div>
 
-                      <div className="p-8 rounded-[40px] bg-red-500/5 border border-red-500/20 space-y-4">
+                      <div className="p-5 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-red-500/5 border border-red-500/20 space-y-4">
                         <h4 className="text-xs font-black uppercase tracking-widest text-red-500">Areas to Improve</h4>
                         <div className="space-y-2">
                           {(mockReport.match(/Areas to Improve([\s\S]+?)AI Result/) || [null, "⚠ React reconciliation\n⚠ API error handling\n⚠ Advanced performance"])[1]
@@ -2090,7 +2093,7 @@ export default function ChatbotPage() {
                         </div>
                       </div>
 
-                      <div className="p-8 rounded-[40px] t-bg-card border t-border-strong space-y-4">
+                      <div className="p-5 sm:p-8 rounded-[24px] sm:rounded-[40px] t-bg-card border t-border-strong space-y-4">
                         <h4 className="text-xs font-black uppercase tracking-widest">AI Readiness</h4>
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center font-black text-white text-lg">
@@ -2186,7 +2189,7 @@ export default function ChatbotPage() {
 
               <div ref={messagesEndRef} />
             </div>
-            <footer className="p-6 lg:p-12" style={{ background: `linear-gradient(to top, var(--bg-base) 60%, transparent)` }}>
+            <footer className="p-4 sm:p-6 lg:p-8" style={{ background: `linear-gradient(to top, var(--bg-base) 60%, transparent)` }}>
               <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto relative group">
                 <input 
                   type="text" 
@@ -2194,7 +2197,7 @@ export default function ChatbotPage() {
                   onChange={(e) => setInput(e.target.value)} 
                   disabled={isLoading}
                   placeholder={isLoading ? "Please wait..." : "Type your answer..."} 
-                  className="w-full rounded-[24px] py-6 pl-8 pr-20 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all shadow-2xl disabled:opacity-50" 
+                  className="w-full rounded-[24px] py-4 sm:py-6 pl-4 sm:pl-8 pr-16 sm:pr-20 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all shadow-2xl disabled:opacity-50 text-sm" 
                   style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} 
                 />
                 <button type="submit" disabled={isLoading || !input.trim()} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center hover:bg-purple-500 disabled:opacity-50 transition-all">
