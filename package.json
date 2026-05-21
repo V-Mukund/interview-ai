@@ -7,6 +7,7 @@
     "start": "npx concurrently \"npm run start:prod --prefix backend\" \"npm run start --prefix frontend\""
   },
   "dependencies": {
+    "@nestjs/config": "^4.0.4",
     "concurrently": "^8.2.2"
   }
 }

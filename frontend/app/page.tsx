@@ -28,7 +28,7 @@ export default function LoginPage() {
     const endpoint = isRegister ? '/auth/register' : '/auth/login';
     try {
       const payload = isRegister ? { email, username, password } : { email, password };
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       const response = await fetch(`${baseUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
