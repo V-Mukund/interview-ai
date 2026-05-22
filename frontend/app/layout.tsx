@@ -8,6 +8,20 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "FORGE Interview AI",
   description: "Master your interviews with AI-powered mock sessions",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "FORGE AI",
+  },
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    apple: "/icons/icon-192x192.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#7c3aed",
 };
 
 export default function RootLayout({

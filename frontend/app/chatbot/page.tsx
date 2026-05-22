@@ -578,13 +578,13 @@ export default function ChatbotPage() {
       {/* MOBILE MENU TOGGLE */}
       <button 
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-6 left-6 z-[100] w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-900/40"
+        className="md:hidden fixed top-6 left-6 z-[100] w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-900/40"
       >
         {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
       {/* 1. SIDEBAR (SaaS Style) */}
-      <aside className={`fixed lg:relative inset-y-0 left-0 w-72 t-bg-base border-r t-border flex flex-col transition-all duration-300 z-50 backdrop-blur-xl shadow-sm ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed md:relative inset-y-0 left-0 w-72 t-bg-base border-r t-border flex flex-col transition-all duration-300 z-50 backdrop-blur-xl shadow-sm ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         
         {/* BRAND LOGO */}
         <div className="p-8 flex items-center gap-4">
@@ -745,8 +745,8 @@ export default function ChatbotPage() {
       </aside>
 
       {/* 2. HISTORY COLUMN (Responsive) */}
-      <aside className={`fixed lg:relative inset-y-0 left-72 lg:left-0 transition-all duration-300 border-r t-bg-panel flex flex-col z-40 ${showHistory && activeThreadId ? 'w-72 lg:w-80 opacity-100' : 'w-0 opacity-0 overflow-hidden'} ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`} style={{ borderColor: 'var(--border)' }}>
-        <div className="p-6 pt-24 lg:pt-6">
+      <aside className={`fixed md:relative inset-y-0 left-72 md:left-0 transition-all duration-300 border-r t-bg-panel flex flex-col z-40 ${showHistory && activeThreadId ? 'w-72 md:w-80 opacity-100' : 'w-0 opacity-0 overflow-hidden'} ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`} style={{ borderColor: 'var(--border)' }}>
+        <div className="p-6 pt-24 md:pt-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold mb-1 flex items-center gap-2">History</h2>
@@ -816,12 +816,12 @@ export default function ChatbotPage() {
       {isSidebarOpen && (
         <div 
           onClick={() => setIsSidebarOpen(false)}
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[45]"
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[45]"
         />
       )}
 
       {/* 3. MAIN DASHBOARD (Premium Panel) */}
-      <main className="flex-1 flex flex-col relative overflow-hidden h-screen" style={{ backgroundColor: 'var(--bg-base)' }}>
+      <main className="flex-1 flex flex-col relative overflow-hidden h-screen pt-20 md:pt-0" style={{ backgroundColor: 'var(--bg-base)' }}>
         
         {showPrepMaterials ? (
           <PrepDashboard />
@@ -1008,109 +1008,177 @@ export default function ChatbotPage() {
               ) : completedInterviews.length > 0 ? (
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-white/5 text-sm font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-500 pb-3">
-                          <th className="pb-3 pl-4 w-12 text-center">
-                            <input 
-                              type="checkbox"
-                              checked={completedInterviews.length > 0 && selectedInterviews.length === completedInterviews.length}
-                              onChange={handleSelectAllInterviews}
-                              className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                            />
-                          </th>
-                          <th className="pb-3">Company</th>
-                          <th className="pb-3">Target Role</th>
-                          <th className="pb-3">Assessment Date</th>
-                          <th className="pb-3 text-center">Score</th>
-                          <th className="pb-3 text-center">Accuracy</th>
-                          <th className="pb-3 text-right pr-4">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y border-white/5">
-                        {completedInterviews.map((item) => {
-                          const companyInfo = companies.find(c => c.id === item.company.toLowerCase()) || {
-                            title: item.company,
-                            color: 'from-neutral-800 to-neutral-600'
-                          };
-                          const roleInfo = roles.find(r => r.title.toLowerCase() === item.role.toLowerCase() || r.id === item.role.toLowerCase()) || {
-                            title: item.role,
-                            color: 'from-neutral-800 to-neutral-600'
-                          };
+                    <div className="hidden md:block">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/5 text-sm font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-500 pb-3">
+                            <th className="pb-3 pl-4 w-12 text-center">
+                              <input 
+                                type="checkbox"
+                                checked={completedInterviews.length > 0 && selectedInterviews.length === completedInterviews.length}
+                                onChange={handleSelectAllInterviews}
+                                className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                              />
+                            </th>
+                            <th className="pb-3">Company</th>
+                            <th className="pb-3">Target Role</th>
+                            <th className="pb-3">Assessment Date</th>
+                            <th className="pb-3 text-center">Score</th>
+                            <th className="pb-3 text-center">Accuracy</th>
+                            <th className="pb-3 text-right pr-4">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y border-white/5">
+                          {completedInterviews.map((item) => {
+                            const companyInfo = companies.find(c => c.id === item.company.toLowerCase()) || {
+                              title: item.company,
+                              color: 'from-neutral-800 to-neutral-600'
+                            };
+                            const roleInfo = roles.find(r => r.title.toLowerCase() === item.role.toLowerCase() || r.id === item.role.toLowerCase()) || {
+                              title: item.role,
+                              color: 'from-neutral-800 to-neutral-600'
+                            };
 
-                          const scoreColor = item.score >= 80 ? 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/20' : 
-                                            item.score >= 65 ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20' : 
-                                            'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20';
+                            const scoreColor = item.score >= 80 ? 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/20' : 
+                                              item.score >= 65 ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20' : 
+                                              'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20';
 
-                          const isSelected = selectedInterviews.includes(item.id);
+                            const isSelected = selectedInterviews.includes(item.id);
 
-                          return (
-                            <tr key={item.id} className={`group hover:bg-white/[0.01] transition-all ${isSelected ? 'bg-purple-500/[0.02]' : ''}`}>
-                              <td className="py-4 pl-4 text-center">
+                            return (
+                              <tr key={item.id} className={`group hover:bg-white/[0.01] transition-all ${isSelected ? 'bg-purple-500/[0.02]' : ''}`}>
+                                <td className="py-4 pl-4 text-center">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => handleToggleSelectInterview(item.id)}
+                                    className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                  />
+                                </td>
+                                <td className="py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${companyInfo.color} flex items-center justify-center text-xs font-black text-white shadow-sm shrink-0`}>
+                                      {companyInfo.title.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <p className="font-extrabold text-sm text-neutral-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                        {companyInfo.title.charAt(0).toUpperCase() + companyInfo.title.slice(1)}
+                                      </p>
+                                      <p className="text-xs font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-500">Corporate Target</p>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                <td className="py-4">
+                                  <div>
+                                    <p className="font-extrabold text-sm text-neutral-900 dark:text-white leading-normal">{roleInfo.title}</p>
+                                    <p className="text-xs font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-500">Technical Career Path</p>
+                                  </div>
+                                </td>
+
+                                <td className="py-4">
+                                  <div>
+                                    <p className="text-sm font-bold text-neutral-800 dark:text-neutral-300">
+                                      {new Date(item.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </p>
+                                    <p className="text-xs font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-500">Completed On</p>
+                                  </div>
+                                </td>
+
+                                <td className="py-4 text-center">
+                                  <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border ${scoreColor}`}>
+                                    {item.score}%
+                                  </span>
+                                </td>
+
+                                <td className="py-4 text-center">
+                                  <span className="text-sm font-bold text-neutral-850 dark:text-neutral-250">
+                                    {item.score}%
+                                  </span>
+                                </td>
+
+                                <td className="py-4 text-right pr-4">
+                                  <div className="flex items-center justify-end gap-2.5">
+                                    <button
+                                      onClick={() => router.push(`/result?id=${item.id}`)}
+                                      className="px-4 py-2 rounded-xl bg-purple-600/10 border border-purple-500/20 text-purple-400 hover:bg-purple-600 hover:text-white font-bold text-xs transition-all shadow-sm shadow-purple-900/10 cursor-pointer"
+                                    >
+                                      View Report
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="block md:hidden space-y-4">
+                      {completedInterviews.map((item) => {
+                        const companyInfo = companies.find(c => c.id === item.company.toLowerCase()) || {
+                          title: item.company,
+                          color: 'from-neutral-800 to-neutral-600'
+                        };
+                        const roleInfo = roles.find(r => r.title.toLowerCase() === item.role.toLowerCase() || r.id === item.role.toLowerCase()) || {
+                          title: item.role,
+                          color: 'from-neutral-800 to-neutral-600'
+                        };
+
+                        const scoreColor = item.score >= 80 ? 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/20' : 
+                                          item.score >= 65 ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20' : 
+                                          'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20';
+
+                        const isSelected = selectedInterviews.includes(item.id);
+
+                        return (
+                          <div key={item.id} className={`p-5 rounded-2xl border t-border flex flex-col gap-4 transition-all ${isSelected ? 'bg-purple-500/[0.02]' : 'bg-white/[0.01]'}`} style={{ borderColor: 'var(--border)' }}>
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
                                 <input 
                                   type="checkbox"
                                   checked={isSelected}
                                   onChange={() => handleToggleSelectInterview(item.id)}
                                   className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
                                 />
-                              </td>
-                              <td className="py-4">
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${companyInfo.color} flex items-center justify-center text-xs font-black text-white shadow-sm shrink-0`}>
-                                    {companyInfo.title.substring(0, 2).toUpperCase()}
-                                  </div>
-                                  <div>
-                                    <p className="font-extrabold text-sm text-neutral-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                                      {companyInfo.title.charAt(0).toUpperCase() + companyInfo.title.slice(1)}
-                                    </p>
-                                    <p className="text-xs font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-500">Corporate Target</p>
-                                  </div>
+                                <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${companyInfo.color} flex items-center justify-center text-xs font-black text-white shadow-sm shrink-0`}>
+                                  {companyInfo.title.substring(0, 2).toUpperCase()}
                                 </div>
-                              </td>
-
-                              <td className="py-4">
                                 <div>
-                                  <p className="font-extrabold text-sm text-neutral-900 dark:text-white leading-normal">{roleInfo.title}</p>
-                                  <p className="text-xs font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-500">Technical Career Path</p>
-                                </div>
-                              </td>
-
-                              <td className="py-4">
-                                <div>
-                                  <p className="text-sm font-bold text-neutral-800 dark:text-neutral-300">
-                                    {new Date(item.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                                  <p className="font-extrabold text-sm text-neutral-900 dark:text-white">
+                                    {companyInfo.title.charAt(0).toUpperCase() + companyInfo.title.slice(1)}
                                   </p>
-                                  <p className="text-xs font-black uppercase tracking-wider text-neutral-500 dark:text-neutral-500">Completed On</p>
+                                  <p className="text-[10px] font-black uppercase tracking-wider text-neutral-500">Corporate Target</p>
                                 </div>
-                              </td>
+                              </div>
+                              <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border ${scoreColor}`}>
+                                {item.score}%
+                              </span>
+                            </div>
 
-                              <td className="py-4 text-center">
-                                <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border ${scoreColor}`}>
-                                  {item.score}%
-                                </span>
-                              </td>
+                            <div className="border-t border-white/5 pt-3">
+                              <p className="font-extrabold text-sm text-neutral-900 dark:text-white leading-normal">{roleInfo.title}</p>
+                              <p className="text-[10px] font-black uppercase tracking-wider text-neutral-500">Technical Career Path</p>
+                            </div>
 
-                              <td className="py-4 text-center">
-                                <span className="text-sm font-bold text-neutral-850 dark:text-neutral-250">
-                                  {item.score}%
-                                </span>
-                              </td>
-
-                              <td className="py-4 text-right pr-4">
-                                <div className="flex items-center justify-end gap-2.5">
-                                  <button
-                                    onClick={() => router.push(`/result?id=${item.id}`)}
-                                    className="px-4 py-2 rounded-xl bg-purple-600/10 border border-purple-500/20 text-purple-400 hover:bg-purple-600 hover:text-white font-bold text-xs transition-all shadow-sm shadow-purple-900/10 cursor-pointer"
-                                  >
-                                    View Report
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                            <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                              <div>
+                                <p className="text-xs font-bold text-neutral-800 dark:text-neutral-300">
+                                  {new Date(item.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                </p>
+                                <p className="text-[9px] font-black uppercase tracking-wider text-neutral-500">Completed On</p>
+                              </div>
+                              <button
+                                onClick={() => router.push(`/result?id=${item.id}`)}
+                                className="px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-500 font-bold text-xs transition-all shadow-sm shadow-purple-900/10 cursor-pointer"
+                              >
+                                View Report
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -1513,13 +1581,13 @@ export default function ChatbotPage() {
           /* 2.4 NEW DASHBOARD HOME VIEW! */
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden animate-in fade-in duration-500 relative">
             {/* Navbar / Header */}
-            <header className="p-4 lg:px-6 flex items-center justify-between shrink-0" style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-base)' }}>
-              <div className="flex items-center gap-6">
+            <header className="p-4 pl-16 md:pl-6 lg:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0" style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-base)' }}>
+              <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
                 <div>
-                  <h1 className="text-lg font-black text-neutral-900 dark:text-white flex items-center gap-2">
+                  <h1 className="text-base md:text-lg font-black text-neutral-900 dark:text-white flex items-center gap-2">
                     Welcome back, <span className="text-purple-500">{user?.username || 'Candidate'}</span> 👋
                   </h1>
-                  <p className="text-sm text-neutral-700 dark:text-neutral-400 mt-0.5 font-bold">Here is your FORGE Career Preparedness overview.</p>
+                  <p className="text-xs md:text-sm text-neutral-700 dark:text-neutral-400 mt-0.5 font-bold">Here is your FORGE Career Preparedness overview.</p>
                 </div>
                 {/* Current Date and Day */}
                 <div className="hidden md:block pl-6 border-l border-white/10 shrink-0">
@@ -1940,7 +2008,7 @@ export default function ChatbotPage() {
                         const roleInfo = roles.find(r => r.id === chat.role.toLowerCase() || r.title.toLowerCase() === chat.role.toLowerCase()) || { title: chat.role, color: 'from-neutral-800 to-neutral-600' };
                         
                         return (
-                          <div key={chat.id || idx} className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between gap-3 group hover:border-white/15 transition-all">
+                          <div key={chat.id || idx} className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 group hover:border-white/15 transition-all">
                             <div className="flex items-center gap-3 min-w-0">
                               <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${companyInfo.color} flex items-center justify-center text-sm font-black text-white shadow-sm shrink-0`}>
                                 {companyInfo.title.substring(0, 2).toUpperCase()}
@@ -1957,26 +2025,28 @@ export default function ChatbotPage() {
                               </div>
                             </div>
                             
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0">
                               <span className="inline-flex items-center justify-center px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-black mr-2">
                                 Score: {chat.score}/100
                               </span>
-                              <button 
-                                onClick={() => {
-                                  setShowAllAttemptsModal(false);
-                                  router.push(`/result?id=${chat.id}`);
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-sm font-black uppercase tracking-widest hover:bg-purple-500 transition-all cursor-pointer"
-                              >
-                                View Report
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteInterviews([chat.id], false)}
-                                className="p-1.5 rounded-lg border border-red-500/20 text-red-550 hover:bg-red-550/15 hover:border-red-500/40 text-red-400 transition-all cursor-pointer"
-                                title="Delete Attempt"
-                              >
-                                <Trash2 size={12} />
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={() => {
+                                    setShowAllAttemptsModal(false);
+                                    router.push(`/result?id=${chat.id}`);
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-sm font-black uppercase tracking-widest hover:bg-purple-500 transition-all cursor-pointer"
+                                >
+                                  View Report
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteInterviews([chat.id], false)}
+                                  className="p-1.5 rounded-lg border border-red-500/20 text-red-550 hover:bg-red-550/15 hover:border-red-500/40 text-red-400 transition-all cursor-pointer"
+                                  title="Delete Attempt"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
