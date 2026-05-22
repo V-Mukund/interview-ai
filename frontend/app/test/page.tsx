@@ -13,6 +13,8 @@ interface Question {
   type: string;
 }
 
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
+
 export default function TestPage() {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -39,7 +41,7 @@ export default function TestPage() {
       const token = localStorage.getItem('token');
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/interview/questions?role=${encodeURIComponent(role)}&company=${encodeURIComponent(company)}&difficulty=${encodeURIComponent(difficulty)}`,
+          `${baseUrl}/prep/questions?role=${encodeURIComponent(role)}&company=${encodeURIComponent(company)}&difficulty=${encodeURIComponent(difficulty)}`,
           {
             headers: { 'Authorization': `Bearer ${token}` }
           }
@@ -142,7 +144,7 @@ export default function TestPage() {
     }));
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/interview/submit`, {
+      const res = await fetch(`${baseUrl}/prep/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

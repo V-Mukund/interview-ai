@@ -50,6 +50,8 @@ function ScoreRing({ score, max = 100 }: { score: number; max?: number }) {
   );
 }
 
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
+
 function ResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,7 +71,7 @@ function ResultContent() {
         setErrorMsg(null);
         const token = localStorage.getItem('token');
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/interviews/${id}/performance`, {
+          const res = await fetch(`${baseUrl}/api/interviews/${id}/performance`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (!res.ok) throw new Error('Failed to retrieve performance assessment report');

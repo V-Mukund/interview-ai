@@ -12,5 +12,6 @@ import { DashboardController } from './dashboard.controller';
   imports: [TypeOrmModule.forFeature([Conversation, MockResult])],
   providers: [ChatbotService, InterviewService],
   controllers: [ChatbotController, InterviewController, DashboardController],
+  exports: [InterviewService],
 })
 export class ChatbotModule {}

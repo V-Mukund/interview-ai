@@ -46,6 +46,8 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from '../theme-provider';
 import PrepDashboard from '../../components/PrepDashboard';
 
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
+
 export default function ChatbotPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
@@ -145,7 +147,7 @@ export default function ChatbotPage() {
     }
 
     // Fetch user profile
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/profile`, {
+    fetch(`${baseUrl}/auth/profile`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => {
@@ -188,7 +190,7 @@ export default function ChatbotPage() {
   const fetchHistory = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/chatbot/history`, {
+      const res = await fetch(`${baseUrl}/chatbot/history`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -203,7 +205,7 @@ export default function ChatbotPage() {
     setHistoryError(null);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/interview/history`, {
+      const res = await fetch(`${baseUrl}/api/interview/history`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -224,7 +226,7 @@ export default function ChatbotPage() {
     setIsLoadingStats(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/dashboard/interview-stats`, {
+      const res = await fetch(`${baseUrl}/api/dashboard/interview-stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -261,7 +263,7 @@ export default function ChatbotPage() {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/interview/history`, {
+      const res = await fetch(`${baseUrl}/api/interview/history`, {
         method: 'DELETE',
         headers: { 
           'Content-Type': 'application/json',
@@ -294,7 +296,7 @@ export default function ChatbotPage() {
     
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/chatbot/clear`, {
+      const res = await fetch(`${baseUrl}/chatbot/clear`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -326,7 +328,7 @@ export default function ChatbotPage() {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/chatbot/delete-multiple`, {
+      const res = await fetch(`${baseUrl}/chatbot/delete-multiple`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -411,7 +413,7 @@ export default function ChatbotPage() {
       setMockState('evaluating');
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/interview/submit`, {
+        const res = await fetch(`${baseUrl}/prep/submit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ 
@@ -445,7 +447,7 @@ export default function ChatbotPage() {
     setStatusMsg(null);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/profile`, {
+      const res = await fetch(`${baseUrl}/auth/profile`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
@@ -497,7 +499,7 @@ export default function ChatbotPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/chatbot/message`, {
+      const response = await fetch(`${baseUrl}/chatbot/message`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

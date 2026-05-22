@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, BookOpen, Star, Clock, BrainCircuit, X, Play, Zap, FileText, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
+
 export default function PrepDashboard() {
   const [materials, setMaterials] = useState<any[]>([]);
   const [filteredMaterials, setFilteredMaterials] = useState<any[]>([]);
@@ -48,16 +50,16 @@ export default function PrepDashboard() {
     if (!token) return;
 
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/prep/seed`, {
+      await fetch(`${baseUrl}/prep/seed`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
       const [matRes, progRes, bookRes, recRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/prep/materials`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/prep/progress`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/prep/bookmarks`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/prep/recently-viewed`, { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${baseUrl}/prep/materials`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${baseUrl}/prep/progress`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${baseUrl}/prep/bookmarks`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${baseUrl}/prep/recently-viewed`, { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
 
       if (matRes.ok) {
@@ -98,7 +100,7 @@ export default function PrepDashboard() {
     e.stopPropagation();
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/prep/bookmarks/${materialId}`, {
+      const res = await fetch(`${baseUrl}/prep/bookmarks/${materialId}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -116,7 +118,7 @@ export default function PrepDashboard() {
   const handleMarkComplete = async (materialId: number) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/prep/progress/${materialId}`, {
+      const res = await fetch(`${baseUrl}/prep/progress/${materialId}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -140,7 +142,7 @@ export default function PrepDashboard() {
     
     const token = localStorage.getItem('token');
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/prep/recently-viewed/${mat.id}`, {
+      await fetch(`${baseUrl}/prep/recently-viewed/${mat.id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -160,7 +162,7 @@ export default function PrepDashboard() {
         ? JSON.stringify({ concept: selectedMaterial.title })
         : JSON.stringify({ topic: selectedMaterial.title, content: selectedMaterial.content });
       
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${endpoint}`, {
+      const res = await fetch(`${baseUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body
@@ -187,7 +189,7 @@ export default function PrepDashboard() {
     setGeneratingQuestions(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/prep/ai/questions`, {
+      const res = await fetch(`${baseUrl}/prep/ai/questions`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: selectedMaterial.title, content: selectedMaterial.content })
