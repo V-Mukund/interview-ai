@@ -575,7 +575,7 @@ export default function ChatbotPage() {
   };
 
   return (
-    <div className="flex h-screen t-bg-base t-text font-sans overflow-hidden relative" style={{ color: 'var(--text-primary)' }}>
+    <div className="flex h-screen t-bg-base t-text font-sans overflow-hidden relative max-w-full" style={{ color: 'var(--text-primary)' }}>
       
       {/* MOBILE MENU TOGGLE */}
       <button 
@@ -1583,379 +1583,306 @@ export default function ChatbotPage() {
           /* 2.4 NEW DASHBOARD HOME VIEW! */
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden animate-in fade-in duration-500 relative">
             {/* Navbar / Header */}
-            <header className="p-4 pl-16 md:pl-6 lg:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0" style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-base)' }}>
-              <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-                <div>
-                  <h1 className="text-base md:text-lg font-black text-neutral-900 dark:text-white flex items-center gap-2">
-                    Welcome back, <span className="text-purple-500">{user?.username || 'Candidate'}</span> 👋
-                  </h1>
-                  <p className="text-xs md:text-sm text-neutral-700 dark:text-neutral-400 mt-0.5 font-bold">Here is your FORGE Career Preparedness overview.</p>
-                </div>
-                {/* Current Date and Day */}
-                <div className="hidden md:block pl-6 border-l border-white/10 shrink-0">
-                  <p className="text-sm font-black text-purple-600 dark:text-purple-400">
-                    {mounted ? (() => {
-                      const options: Intl.DateTimeFormatOptions = { 
-                        weekday: 'long', 
-                        day: 'numeric', 
-                        month: 'short', 
-                        year: 'numeric' 
-                      };
-                      return new Date().toLocaleDateString(undefined, options);
-                    })() : ''}
-                  </p>
-                  <p className="text-xs text-neutral-700 dark:text-neutral-400 uppercase font-black tracking-widest leading-none mt-0.5">Local Timezone</p>
-                </div>
+            <header className="px-4 pl-16 md:pl-6 py-3 flex items-center justify-between gap-3 shrink-0" style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-base)' }}>
+              {/* Left: Welcome text */}
+              <div className="min-w-0">
+                <h1 className="text-sm md:text-base font-black truncate" style={{ color: 'var(--text-primary)' }}>
+                  Welcome, <span className="text-purple-500">{user?.username || 'Candidate'}</span> 👋
+                </h1>
+                <p className="text-[10px] md:text-xs font-bold hidden sm:block" style={{ color: 'var(--text-muted)' }}>FORGE Career Preparedness</p>
               </div>
-              <div className="flex items-center gap-2">
+              {/* Right: Date (md+) + actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Date — desktop only */}
+                <div className="hidden md:block text-right mr-2">
+                  <p className="text-xs font-black text-purple-400">
+                    {mounted ? new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                  </p>
+                  <p className="text-[10px] uppercase font-black tracking-widest" style={{ color: 'var(--text-muted)' }}>Local Timezone</p>
+                </div>
                 {/* Theme toggle */}
                 <button
                   onClick={toggleTheme}
                   aria-label="Toggle theme"
-                  className="w-8 h-8 rounded-lg bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10 flex items-center justify-center text-neutral-800 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-all shadow-sm cursor-pointer"
+                  className="w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
                 >
-                  {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+                  {theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
                 </button>
-                {/* New Assessment Button */}
-                <button 
+                {/* New Interview */}
+                <button
                   onClick={() => { startNewChat(); setIsMockMode(true); }}
-                  className="px-3 py-1.5 bg-purple-600 text-white rounded-lg font-bold text-sm hover:bg-purple-500 transition-all flex items-center gap-1 shadow-md shadow-purple-900/20 cursor-pointer"
+                  className="px-3 py-1.5 bg-purple-600 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-purple-500 transition-all flex items-center gap-1 shadow-md shadow-purple-900/20 cursor-pointer whitespace-nowrap"
                 >
-                  <Plus size={12} /> New Interview
+                  <Plus size={11} /> New Interview
                 </button>
               </div>
             </header>
 
             {/* Dashboard Content Container */}
-            <div className="flex-1 p-4 overflow-y-auto lg:overflow-hidden flex flex-col min-h-0 bg-gradient-to-b from-transparent to-black/10">
-              <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 h-auto lg:h-full min-h-0 lg:overflow-hidden">
+            <div className="flex-1 overflow-y-auto" style={{ backgroundColor: 'var(--bg-base)' }}>
+              <div className="flex flex-col lg:grid lg:grid-cols-12 gap-3 p-4 lg:h-full lg:min-h-0 lg:overflow-hidden lg:p-4">
                 
-                {/* LEFT COLUMN: Profile & Performance (col-span-3) */}
-                <div className="col-span-12 md:col-span-4 lg:col-span-3 flex flex-col gap-4 min-h-0 h-auto lg:h-full lg:overflow-hidden">
+                {/* LEFT COLUMN: Profile & Performance */}
+                <div className="lg:col-span-3 flex flex-col gap-3 lg:min-h-0 lg:h-full lg:overflow-hidden">
                   
-                  {/* User Profile Summary Card */}
-                  <div className="p-4 rounded-[24px] bg-white/2 border t-border flex flex-col gap-3 shrink-0 relative overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-md shadow-purple-950/30 shrink-0">
-                        {user?.username?.substring(0, 1).toUpperCase() || 'U'}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-sm font-black text-neutral-900 dark:text-white truncate">@{user?.username || 'User'}</h4>
-                        <p className="text-xs text-neutral-700 dark:text-neutral-400 truncate uppercase font-extrabold tracking-wider">{user?.email || 'Candidate Account'}</p>
-                      </div>
-                    </div>
-                    {user?.bio && (
-                      <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed italic line-clamp-2">
-                        "{user.bio}"
-                      </p>
-                    )}
-                    <button 
-                      onClick={() => setShowProfile(true)}
-                      className="text-xs font-black text-purple-600 dark:text-purple-400 hover:text-purple-500 transition-colors text-left flex items-center gap-0.5 mt-1 cursor-pointer animate-pulse"
-                    >
-                      Edit Profile Settings <ChevronRight size={10} />
-                    </button>
-                  </div>
+                  {/* Profile + Accuracy Row on Mobile */}
+                  <div className="flex flex-row gap-3 lg:flex-col">
 
-                  {/* Performance Overview Card */}
-                  <div className="p-4 rounded-[24px] bg-purple-600/5 border border-purple-500/20 flex-1 min-h-[220px] lg:min-h-0 overflow-hidden flex flex-col justify-between gap-3">
-                    <div className="space-y-2 flex-1 flex flex-col items-center justify-center min-h-0">
-                      <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider text-center shrink-0">Assessment Accuracy</p>
-                      {/* Compact Circular Progress Ring */}
-                      <div className="relative w-20 h-20 flex items-center justify-center shrink-0 my-1">
+                    {/* User Profile Summary Card */}
+                    <div className="flex-1 p-4 rounded-2xl border flex flex-col gap-2 overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center text-white text-base font-black shadow-md shrink-0">
+                          {user?.username?.substring(0, 1).toUpperCase() || 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-sm font-black truncate" style={{ color: 'var(--text-primary)' }}>@{user?.username || 'User'}</h4>
+                          <p className="text-[10px] truncate uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>{user?.email || 'Candidate'}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setShowProfile(true)} className="text-[10px] font-black text-purple-400 hover:text-purple-300 flex items-center gap-0.5 cursor-pointer mt-1">
+                        Edit Profile <ChevronRight size={9} />
+                      </button>
+                    </div>
+
+                    {/* Assessment Accuracy Card */}
+                    <div className="flex-1 p-4 rounded-2xl border flex flex-col items-center justify-center gap-2" style={{ backgroundColor: 'rgba(147,51,234,0.05)', borderColor: 'rgba(147,51,234,0.2)' }}>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-center" style={{ color: 'var(--text-muted)' }}>Accuracy</p>
+                      <div className="relative w-16 h-16 flex items-center justify-center">
                         <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                          <path className="text-white/3" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                          <path className="text-white/5" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                           <path className="text-purple-500" strokeDasharray={`${getSessionStats().avgPct}, 100`} strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         </svg>
-                        <span className="absolute text-xs font-black text-purple-600 dark:text-purple-400">{getSessionStats().avgPct}%</span>
+                        <span className="absolute text-xs font-black text-purple-400">{getSessionStats().avgPct}%</span>
                       </div>
-                      <div className="text-center shrink-0">
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border ${getSessionStats().readinessColor}`}>
-                          {getSessionStats().readiness}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-auto pt-2 border-t border-purple-500/10 shrink-0">
-                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full" style={{ width: `${getSessionStats().avgPct}%` }} />
-                      </div>
-                      <p className="text-sm text-right text-neutral-800 dark:text-neutral-400 mt-1 font-black">Progress to Strong Candidate</p>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase border ${getSessionStats().readinessColor}`}>
+                        {getSessionStats().readiness}
+                      </span>
                     </div>
                   </div>
-
                 </div>
 
-                {/* CENTER COLUMN: Interview Activity Analytics (col-span-5) */}
-                <div className="col-span-12 md:col-span-8 lg:col-span-5 flex flex-col gap-4 min-h-0 h-auto lg:h-full lg:overflow-hidden animate-in slide-in-from-bottom-2 duration-300">
-                  
-                  {/* 2x2 Interview Activity Statistics Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
-                    
-                    {/* CARD 1: Total Mocks Completed */}
-                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between min-h-[84px] h-auto py-3 hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
-                      <div className="flex justify-between items-start">
-                        <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider">Total Interviews</p>
-                        <span className="text-sm font-black px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/10 shrink-0">
-                          Last: {dashboardStats.recentActivities?.[0]?.relativeTime || 'None'}
+                {/* CENTER COLUMN: Stats + Activity Chart */}
+                <div className="lg:col-span-5 flex flex-col gap-3 lg:min-h-0 lg:h-full lg:overflow-hidden">
+
+                  {/* 2×2 Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3 shrink-0">
+
+                    {/* CARD 1: Total Interviews */}
+                    <div className="p-3 rounded-2xl border flex flex-col gap-1.5" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+                      <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Total</p>
+                      <h3 className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>{dashboardStats.totalInterviews}</h3>
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <span className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>All-time</span>
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/10 shrink-0">
+                          {dashboardStats.recentActivities?.[0]?.relativeTime || 'None'}
                         </span>
-                      </div>
-                      <div className="flex items-baseline justify-between mt-1">
-                        <h3 className="text-2xl font-black text-neutral-900 dark:text-white">{dashboardStats.totalInterviews}</h3>
-                        <p className="text-sm text-neutral-750 dark:text-neutral-400 font-extrabold truncate">All-time sessions</p>
                       </div>
                     </div>
 
                     {/* CARD 2: Weekly Mocks */}
-                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between min-h-[84px] h-auto py-3 hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
-                      <div className="flex justify-between items-start">
-                        <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider">Weekly Mocks</p>
-                        <span className="text-sm font-black px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/10 shrink-0">
-                          +{dashboardStats.weeklyInterviews} this week
+                    <div className="p-3 rounded-2xl border flex flex-col gap-1.5" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+                      <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>This Week</p>
+                      <h3 className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>{dashboardStats.weeklyInterviews}</h3>
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <span className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>Last 7 days</span>
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/10 shrink-0">
+                          +{dashboardStats.weeklyInterviews}
                         </span>
-                      </div>
-                      <div className="flex items-baseline justify-between mt-1">
-                        <h3 className="text-2xl font-black text-neutral-900 dark:text-white">{dashboardStats.weeklyInterviews}</h3>
-                        <p className="text-sm text-neutral-750 dark:text-neutral-400 font-extrabold truncate">Last 7 days</p>
                       </div>
                     </div>
 
                     {/* CARD 3: Today's Mocks */}
-                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between min-h-[84px] h-auto py-3 hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
-                      <div className="flex justify-between items-start">
-                        <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider">Today's Mocks</p>
-                        <span className={`text-sm font-black px-1.5 py-0.5 rounded shrink-0 ${dashboardStats.todayInterviews > 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/10' : 'bg-white/5 text-neutral-500'}`}>
+                    <div className="p-3 rounded-2xl border flex flex-col gap-1.5" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+                      <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Today</p>
+                      <h3 className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>{dashboardStats.todayInterviews}</h3>
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <span className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>Completed</span>
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded shrink-0 ${dashboardStats.todayInterviews > 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/10' : 'bg-white/5 text-neutral-500 border border-white/5'}`}>
                           {dashboardStats.todayInterviews > 0 ? 'Active' : 'Target: 2'}
                         </span>
                       </div>
-                      <div className="flex items-baseline justify-between mt-1">
-                        <h3 className="text-2xl font-black text-neutral-900 dark:text-white">{dashboardStats.todayInterviews}</h3>
-                        <p className="text-sm text-neutral-750 dark:text-neutral-400 font-extrabold truncate">Completed today</p>
-                      </div>
                     </div>
 
-                    {/* CARD 4: Frequency Rate */}
-                    <div className="p-3.5 rounded-[22px] bg-white/2 border t-border flex flex-col justify-between min-h-[84px] h-auto py-3 hover:border-purple-500/20 transition-all" style={{ borderColor: 'var(--border)' }}>
-                      <div className="flex justify-between items-start">
-                        <p className="text-xs text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider">Mock Frequency</p>
-                        <span className="text-sm font-black px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/10 shrink-0">
-                          {dashboardStats.averageFrequency >= 2.0 ? 'Highly Active' : 'Consistent'}
+                    {/* CARD 4: Mock Frequency */}
+                    <div className="p-3 rounded-2xl border flex flex-col gap-1.5" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+                      <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Frequency</p>
+                      <h3 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>{dashboardStats.averageFrequency}<span className="text-sm font-bold" style={{ color: 'var(--text-muted)' }}>/wk</span></h3>
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <span className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>Best: {dashboardStats.mostActiveDay?.substring(0, 3)}</span>
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/10 shrink-0">
+                          {dashboardStats.averageFrequency >= 2.0 ? 'Active' : 'Regular'}
                         </span>
                       </div>
-                      <div className="flex items-baseline justify-between mt-1">
-                        <h3 className="text-2xl font-black text-neutral-900 dark:text-white">{dashboardStats.averageFrequency} <span className="text-sm text-neutral-500 font-extrabold">/ wk</span></h3>
-                        <p className="text-sm text-neutral-750 dark:text-neutral-400 font-extrabold truncate">Most active: {dashboardStats.mostActiveDay?.substring(0, 3)}</p>
-                      </div>
                     </div>
-
                   </div>
 
-                  {/* Activity Graph Widget */}
-                  <div 
+                  {/* Weekly Activity Trend Chart */}
+                  <div
                     onClick={() => setShowPercentagesInWeeklyStats(!showPercentagesInWeeklyStats)}
-                    className="flex-1 flex flex-col min-h-[260px] lg:min-h-0 bg-white/2 border t-border p-4 rounded-[28px] overflow-hidden justify-between cursor-pointer hover:border-purple-500/30 transition-all select-none" 
-                    style={{ borderColor: 'var(--border)' }}
+                    className="flex flex-col p-4 rounded-2xl border cursor-pointer hover:border-purple-500/30 transition-all select-none"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
                   >
-                    <div className="flex justify-between items-center shrink-0">
+                    <div className="flex justify-between items-center mb-3">
                       <div>
-                        <h3 className="font-black text-xs text-neutral-900 dark:text-white flex items-center gap-1.5">
-                          <TrendingUp size={14} className="text-purple-400" /> Weekly Activity Trend
+                        <h3 className="font-black text-xs flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                          <TrendingUp size={13} className="text-purple-400" /> Weekly Activity Trend
                         </h3>
-                        <p className="text-xs text-neutral-700 dark:text-neutral-400 font-bold mt-0.5">
-                          {showPercentagesInWeeklyStats 
-                            ? "Percentage of total completed interviews" 
-                            : "Attendance logs for the last 7 days (click to toggle %)"
-                          }
+                        <p className="text-[10px] font-bold mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                          {showPercentagesInWeeklyStats ? 'Showing % of total' : 'Last 7 days (tap to toggle %)'}
                         </p>
                       </div>
                       {completedInterviews.length > 0 && (
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); setShowAllAttemptsModal(true); }}
-                          className="text-xs font-black text-purple-600 dark:text-purple-400 hover:text-purple-500 transition-colors uppercase tracking-wider cursor-pointer border border-transparent hover:border-purple-500/10 rounded px-1"
+                          className="text-[10px] font-black text-purple-400 hover:text-purple-300 uppercase tracking-wider cursor-pointer px-2 py-1 rounded border border-purple-500/20 shrink-0"
                         >
-                          All Logs ({completedInterviews.length})
+                          Logs ({completedInterviews.length})
                         </button>
                       )}
                     </div>
-
-                    {/* SVG/Flex Mock Bar Chart */}
-                    <div className="flex items-end justify-between gap-3 h-28 px-1 mt-3">
+                    <div className="flex items-end justify-between gap-1.5 h-24 px-1">
                       {dashboardStats.dailyStats && dashboardStats.dailyStats.length > 0 ? (
                         dashboardStats.dailyStats.map((dayItem: any, idx: number) => {
                           const maxCount = Math.max(1, ...dashboardStats.dailyStats.map((d: any) => d.count));
                           const percentage = Math.min(100, Math.max(8, (dayItem.count / maxCount) * 100));
-                          
                           return (
-                            <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 group">
-                              <div className="w-full bg-white/5 rounded-t-lg relative overflow-hidden flex items-end h-20">
-                                <div 
-                                  className={`w-full rounded-t-md transition-all duration-700 ${dayItem.count > 0 ? 'bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 shadow-[0_0_8px_rgba(147,51,234,0.4)]' : 'bg-neutral-800/20'}`} 
+                            <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
+                              <div className="w-full bg-white/5 rounded-t-md relative overflow-hidden flex items-end h-16">
+                                <div
+                                  className={`w-full rounded-t-sm transition-all duration-700 ${dayItem.count > 0 ? 'bg-gradient-to-t from-purple-700 to-indigo-500' : 'bg-white/5'}`}
                                   style={{ height: `${percentage}%` }}
                                 />
                                 {dayItem.count > 0 && (
-                                  <span className="absolute top-1 left-1/2 -translate-x-1/2 text-sm font-black text-purple-300">
-                                    {showPercentagesInWeeklyStats 
-                                      ? `${Math.round((dayItem.count / Math.max(1, dashboardStats.totalInterviews)) * 100)}%` 
-                                      : dayItem.count
-                                    }
+                                  <span className="absolute top-0.5 left-1/2 -translate-x-1/2 text-[9px] font-black text-purple-300">
+                                    {showPercentagesInWeeklyStats
+                                      ? `${Math.round((dayItem.count / Math.max(1, dashboardStats.totalInterviews)) * 100)}%`
+                                      : dayItem.count}
                                   </span>
                                 )}
                               </div>
-                              <span className="text-[7px] text-neutral-800 dark:text-neutral-400 font-black uppercase tracking-wider">{dayItem.day}</span>
-                              <span className="text-[6px] text-neutral-700 dark:text-neutral-500 font-black leading-none">{dayItem.date}</span>
+                              <span className="text-[8px] font-black uppercase" style={{ color: 'var(--text-muted)' }}>{dayItem.day}</span>
                             </div>
                           );
                         })
                       ) : (
-                        <div className="w-full flex items-center justify-center h-20 text-neutral-500 text-sm font-medium">
-                          No recent interview logs found.
+                        <div className="w-full flex items-center justify-center h-16 text-xs" style={{ color: 'var(--text-muted)' }}>
+                          No activity logs yet
                         </div>
                       )}
                     </div>
-
-                    {/* Summary Description Footer Block */}
-                    <div className="pt-3 border-t border-white/5 shrink-0 text-center">
-                      <p className="text-sm font-black text-neutral-800 dark:text-neutral-300 leading-snug">
-                        💡 {dashboardStats.weeklyInterviews} interview{dashboardStats.weeklyInterviews === 1 ? '' : 's'} completed in the last 7 days • {dashboardStats.todayInterviews} completed today
+                    <div className="pt-2 mt-2 border-t text-center" style={{ borderColor: 'var(--border)' }}>
+                      <p className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>
+                        💡 {dashboardStats.weeklyInterviews} this week · {dashboardStats.todayInterviews} today
                       </p>
                     </div>
                   </div>
 
                 </div>
 
-                {/* RIGHT COLUMN: Timeline & Quick Setup (col-span-4) */}
-                <div className="col-span-12 md:col-span-12 lg:col-span-4 flex flex-col gap-4 min-h-0 h-auto lg:h-full lg:overflow-hidden">
-                  
-                  {/* Recent Activity Timeline */}
-                  <div 
-                    onClick={() => {
-                      setShowHistory(true);
-                      setShowProfile(false);
-                      setShowSettings(false);
-                      setWizardStep(0);
-                      setActiveThreadId(null);
-                      fetchCompletedInterviews();
-                    }}
-                    className="flex-1 flex flex-col min-h-[280px] lg:min-h-0 bg-white/2 border t-border p-4 rounded-[28px] overflow-hidden cursor-pointer hover:border-purple-500/30 transition-all" 
-                    style={{ borderColor: 'var(--border)' }}
+                {/* RIGHT COLUMN: Recent Activity + Quick Setup */}
+                <div className="lg:col-span-4 flex flex-col gap-3 lg:min-h-0 lg:h-full lg:overflow-hidden">
+
+                  {/* Recent Activity Card */}
+                  <div
+                    onClick={() => { setShowHistory(true); setShowProfile(false); setShowSettings(false); setWizardStep(0); setActiveThreadId(null); fetchCompletedInterviews(); }}
+                    className="flex flex-col p-4 rounded-2xl border cursor-pointer hover:border-purple-500/30 transition-all"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
                   >
-                    <div className="flex items-center gap-1.5 shrink-0 pb-2 border-b border-white/5">
-                      <History size={14} className="text-purple-400" />
+                    <div className="flex items-center gap-2 pb-2 mb-3 border-b" style={{ borderColor: 'var(--border)' }}>
+                      <History size={13} className="text-purple-400" />
                       <div>
-                        <h3 className="font-black text-neutral-900 dark:text-white text-xs">Recent Activity</h3>
-                        <p className="text-xs text-neutral-700 dark:text-neutral-400 font-bold mt-0.5 leading-none">Your live progression log</p>
+                        <h3 className="font-black text-xs" style={{ color: 'var(--text-primary)' }}>Recent Activity</h3>
+                        <p className="text-[10px] font-bold leading-none mt-0.5" style={{ color: 'var(--text-muted)' }}>Your live progression log</p>
                       </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto mt-3 space-y-3.5 pr-1 custom-scrollbar min-h-0">
+                    <div className="space-y-3">
                       {dashboardStats.recentActivities && dashboardStats.recentActivities.length > 0 ? (
-                        dashboardStats.recentActivities.map((act: any, idx: number) => {
+                        dashboardStats.recentActivities.slice(0, 4).map((act: any, idx: number) => {
                           const companyColor = companies.find(c => c.id === act.company)?.color || 'from-neutral-800 to-neutral-600';
                           const isToday = act.relativeTime === 'Today';
-                          
                           return (
-                            <div key={act.id || idx} className="relative pl-6 flex justify-between items-start group">
-                              
-                              {/* Dot and Dotted Connector */}
-                              <div className="absolute left-[3px] top-1 z-10 flex flex-col items-center">
-                                <div className={`w-2.5 h-2.5 rounded-full border transition-all ${isToday ? 'bg-purple-600 border-purple-500 shadow-[0_0_6px_rgba(147,51,234,0.6)]' : 'bg-neutral-800 border-white/10'}`} />
-                              </div>
-                              {idx < dashboardStats.recentActivities.length - 1 && (
-                                <div className="absolute left-[7px] top-3.5 bottom-[-14px] w-px border-l border-dashed border-white/10" />
-                              )}
-
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[11px] font-black text-neutral-900 dark:text-white group-hover:text-purple-400 transition-colors leading-snug">
-                                  {act.company.charAt(0).toUpperCase() + act.company.slice(1)} {act.role.charAt(0).toUpperCase() + act.role.slice(1)} Interview
-                                </p>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                  <span className={`text-sm font-black uppercase px-1 py-0.2 rounded-md bg-gradient-to-r ${companyColor} text-white`}>
-                                    {act.company.substring(0, 3).toUpperCase()}
-                                  </span>
-                                  <span className="text-sm text-neutral-750 dark:text-neutral-400 font-extrabold uppercase">
-                                    Score: {act.score || 0}/100
-                                  </span>
+                            <div key={act.id || idx} className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-gradient-to-r ${companyColor} text-white shrink-0`}>
+                                  {act.company.substring(0, 3).toUpperCase()}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-[11px] font-black truncate" style={{ color: 'var(--text-primary)' }}>
+                                    {act.company.charAt(0).toUpperCase() + act.company.slice(1)} {act.role.charAt(0).toUpperCase() + act.role.slice(1)}
+                                  </p>
+                                  <p className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>Score: {act.score || 0}/100</p>
                                 </div>
                               </div>
-
-                              <span className={`text-sm font-black uppercase tracking-wider shrink-0 ml-2 px-1.5 py-0.5 rounded ${isToday ? 'bg-purple-600/10 text-purple-400 border border-purple-500/10' : 'text-neutral-500'}`}>
+                              <span className={`text-[9px] font-black uppercase shrink-0 px-1.5 py-0.5 rounded ${isToday ? 'bg-purple-600/10 text-purple-400 border border-purple-500/20' : 'text-neutral-500'}`}>
                                 {act.relativeTime}
                               </span>
-
                             </div>
                           );
                         })
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-center border border-dashed border-white/5 rounded-2xl opacity-60 p-4">
-                          <Award size={24} className="text-purple-500 mb-2" />
-                          <p className="font-bold text-xs">No recent runs</p>
-                          <p className="text-sm t-text-sec mt-0.5 max-w-xs leading-relaxed">Setup your target profile below to launch your first session.</p>
+                        <div className="flex flex-col items-center justify-center py-6 text-center gap-2">
+                          <Award size={20} className="text-purple-500/40" />
+                          <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>No recent sessions yet</p>
+                          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Start a mock interview below</p>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* QUICK ASSESSMENT SETUP CARD */}
-                  <div className="bg-gradient-to-br from-purple-600/5 to-blue-600/5 rounded-[24px] border border-purple-500/15 p-4 flex flex-col justify-between shrink-0 min-h-[196px] h-auto py-4 overflow-hidden">
+                  {/* Quick Assessment Card */}
+                  <div className="p-4 rounded-2xl border flex flex-col gap-3" style={{ backgroundColor: 'rgba(147,51,234,0.04)', borderColor: 'rgba(147,51,234,0.15)' }}>
                     <div>
-                      <h3 className="font-bold text-xs flex items-center gap-1 text-purple-400 shrink-0">
-                        <Sparkles size={14} /> Quick Assessment
+                      <h3 className="font-bold text-xs flex items-center gap-1.5 text-purple-400">
+                        <Sparkles size={13} /> Quick Assessment
                       </h3>
-                      <p className="text-xs t-text-sec mt-0.5 shrink-0 leading-tight">Configure target company to instantly spin up mock questions.</p>
+                      <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'var(--text-muted)' }}>Configure and instantly launch a mock interview session.</p>
                     </div>
 
-                    <div className="space-y-2 flex-1 my-2 min-h-0 flex flex-col justify-center">
-                      <div>
-                        <select 
-                          value={currentRole || ''}
-                          onChange={(e) => setCurrentRole(e.target.value)}
-                          className="w-full t-bg-input border t-border rounded-lg px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-purple-500/30 t-text cursor-pointer"
-                        >
-                          <option value="" disabled className="t-bg-card t-text">Select target role...</option>
-                          {roles.map(r => (
-                            <option key={r.id} value={r.id} className="t-bg-card t-text">{r.title}</option>
-                          ))}
-                        </select>
-                      </div>
+                    <div className="flex flex-col gap-2">
+                      <select
+                        value={currentRole || ''}
+                        onChange={(e) => setCurrentRole(e.target.value)}
+                        className="w-full t-bg-input border t-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/30 t-text cursor-pointer"
+                      >
+                        <option value="" disabled className="t-bg-card t-text">Select target role...</option>
+                        {roles.map(r => (
+                          <option key={r.id} value={r.id} className="t-bg-card t-text">{r.title}</option>
+                        ))}
+                      </select>
 
                       <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <select 
-                            value={currentCompany || ''}
-                            onChange={(e) => setCurrentCompany(e.target.value)}
-                            className="w-full t-bg-input border t-border rounded-lg px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-purple-500/30 t-text cursor-pointer"
-                          >
-                            <option value="" className="t-bg-card t-text">General Company</option>
-                            {companies.map(c => (
-                              <option key={c.id} value={c.id} className="t-bg-card t-text">{c.title}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <select 
-                            value={difficulty}
-                            onChange={(e) => setDifficulty(e.target.value)}
-                            className="w-full t-bg-input border t-border rounded-lg px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-purple-500/30 t-text cursor-pointer"
-                          >
-                            <option value="Entry" className="t-bg-card t-text">Fresher</option>
-                            <option value="Intermediate" className="t-bg-card t-text">Intermediate</option>
-                            <option value="Hard" className="t-bg-card t-text">Senior</option>
-                          </select>
-                        </div>
+                        <select
+                          value={currentCompany || ''}
+                          onChange={(e) => setCurrentCompany(e.target.value)}
+                          className="w-full t-bg-input border t-border rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/30 t-text cursor-pointer"
+                        >
+                          <option value="" className="t-bg-card t-text">Any Company</option>
+                          {companies.map(c => (
+                            <option key={c.id} value={c.id} className="t-bg-card t-text">{c.title}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={difficulty}
+                          onChange={(e) => setDifficulty(e.target.value)}
+                          className="w-full t-bg-input border t-border rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/30 t-text cursor-pointer"
+                        >
+                          <option value="Entry" className="t-bg-card t-text">Fresher</option>
+                          <option value="Intermediate" className="t-bg-card t-text">Intermediate</option>
+                          <option value="Hard" className="t-bg-card t-text">Senior</option>
+                        </select>
                       </div>
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => {
-                        if (!currentRole) {
-                          alert("Please select a target role first!");
-                          return;
-                        }
+                        if (!currentRole) { alert('Please select a target role first!'); return; }
                         startMockInterview();
                       }}
-                      className="w-full py-2 bg-purple-600 text-white font-bold text-sm rounded-lg hover:bg-purple-500 active:scale-[0.98] transition-all flex items-center justify-center gap-1 shadow-md shadow-purple-900/30 shrink-0 cursor-pointer"
+                      className="w-full py-2.5 bg-purple-600 text-white font-bold text-sm rounded-xl hover:bg-purple-500 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md shadow-purple-900/30 cursor-pointer"
                     >
-                      Launch AI Session <ArrowRight size={10} />
+                      Launch AI Session <ArrowRight size={12} />
                     </button>
                   </div>
 
