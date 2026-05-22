@@ -42,15 +42,15 @@ export default function LoginPage() {
         } else {
           setError('Authentication succeeded but no token was received.');
         }
-} else {
-  const errorData = await response.json().catch(() => ({ message: 'Server error' }));
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Server error' }));
 
-  setError(
-    Array.isArray(errorData.message)
-      ? errorData.message.join(', ')
-      : errorData.message || 'Authentication failed'
-  );
-}
+        setError(
+          Array.isArray(errorData.message)
+            ? errorData.message.join(', ')
+            : errorData.message || 'Authentication failed'
+        );
+      }
     } catch (err) {
       setError('Connection failed. Make sure the backend is running.');
     } finally {
