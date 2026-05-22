@@ -112,6 +112,7 @@ export default function ChatbotPage() {
   const [difficulty, setDifficulty] = useState('Intermediate');
   const [showAllAttemptsModal, setShowAllAttemptsModal] = useState(false);
   const [showPercentagesInWeeklyStats, setShowPercentagesInWeeklyStats] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const roles = [
     { id: 'frontend', title: 'Frontend Developer', icon: <Globe size={24} />, color: 'from-blue-500 to-cyan-400', category: 'Web', popular: true },
@@ -140,6 +141,7 @@ export default function ChatbotPage() {
 
 
   useEffect(() => {
+    setMounted(true);
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/');
@@ -1592,7 +1594,7 @@ export default function ChatbotPage() {
                 {/* Current Date and Day */}
                 <div className="hidden md:block pl-6 border-l border-white/10 shrink-0">
                   <p className="text-sm font-black text-purple-600 dark:text-purple-400">
-                    {(() => {
+                    {mounted ? (() => {
                       const options: Intl.DateTimeFormatOptions = { 
                         weekday: 'long', 
                         day: 'numeric', 
@@ -1600,7 +1602,7 @@ export default function ChatbotPage() {
                         year: 'numeric' 
                       };
                       return new Date().toLocaleDateString(undefined, options);
-                    })()}
+                    })() : ''}
                   </p>
                   <p className="text-xs text-neutral-700 dark:text-neutral-400 uppercase font-black tracking-widest leading-none mt-0.5">Local Timezone</p>
                 </div>
@@ -1626,7 +1628,7 @@ export default function ChatbotPage() {
 
             {/* Dashboard Content Container */}
             <div className="flex-1 p-4 overflow-y-auto lg:overflow-hidden flex flex-col min-h-0 bg-gradient-to-b from-transparent to-black/10">
-              <div className="grid grid-cols-12 gap-4 h-auto lg:h-full min-h-0 lg:overflow-hidden">
+              <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 h-auto lg:h-full min-h-0 lg:overflow-hidden">
                 
                 {/* LEFT COLUMN: Profile & Performance (col-span-3) */}
                 <div className="col-span-12 md:col-span-4 lg:col-span-3 flex flex-col gap-4 min-h-0 h-auto lg:h-full lg:overflow-hidden">
