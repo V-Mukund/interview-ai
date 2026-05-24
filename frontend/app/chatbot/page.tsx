@@ -81,6 +81,7 @@ export default function ChatbotPage() {
     mostActiveDay: 'Monday'
   });
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
 
   
   // MOCK INTERVIEW STATES
@@ -182,6 +183,24 @@ export default function ChatbotPage() {
     }
   }, []);
 
+  // NETWORK CONNECTIVITY DETECTOR
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
+
   // AUTO SCROLL TO BOTTOM
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -190,13 +209,28 @@ export default function ChatbotPage() {
   }, [messages, isLoading, mockState]);
 
   const fetchHistory = async () => {
+    // Try to load cached history first
+    try {
+      const cached = localStorage.getItem('chatbot_history');
+      if (cached) {
+        setHistory(JSON.parse(cached));
+      }
+    } catch (e) {
+      console.warn('LocalStorage read failed:', e);
+    }
+
     const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const res = await fetch(`${baseUrl}/chatbot/history`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const data = await res.json();
-      setHistory(data);
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data);
+        localStorage.setItem('chatbot_history', JSON.stringify(data));
+      }
     } catch (err) {
       console.error('History fetch failed:', err);
     }
@@ -205,7 +239,21 @@ export default function ChatbotPage() {
   const fetchCompletedInterviews = async () => {
     setIsLoadingHistory(true);
     setHistoryError(null);
+
+    // Try to load cached completed interviews first
+    try {
+      const cached = localStorage.getItem('chatbot_completed_interviews');
+      if (cached) {
+        setCompletedInterviews(JSON.parse(cached));
+        setIsLoadingHistory(false);
+      }
+    } catch (e) {
+      console.warn('LocalStorage read failed:', e);
+    }
+
     const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const res = await fetch(`${baseUrl}/api/interview/history`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -213,6 +261,7 @@ export default function ChatbotPage() {
       if (res.ok) {
         const data = await res.json();
         setCompletedInterviews(data);
+        localStorage.setItem('chatbot_completed_interviews', JSON.stringify(data));
       } else {
         setHistoryError('Could not retrieve mock attempts history.');
       }
@@ -226,7 +275,21 @@ export default function ChatbotPage() {
 
   const fetchDashboardStats = async () => {
     setIsLoadingStats(true);
+
+    // Try to load cached stats first
+    try {
+      const cached = localStorage.getItem('chatbot_dashboard_stats');
+      if (cached) {
+        setDashboardStats(JSON.parse(cached));
+        setIsLoadingStats(false);
+      }
+    } catch (e) {
+      console.warn('LocalStorage read failed:', e);
+    }
+
     const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const res = await fetch(`${baseUrl}/api/dashboard/interview-stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -234,6 +297,7 @@ export default function ChatbotPage() {
       if (res.ok) {
         const data = await res.json();
         setDashboardStats(data);
+        localStorage.setItem('chatbot_dashboard_stats', JSON.stringify(data));
       }
     } catch (err) {
       console.error('Failed to fetch dashboard stats:', err);
@@ -576,6 +640,12 @@ export default function ChatbotPage() {
 
   return (
     <div className="flex h-screen t-bg-base t-text font-sans overflow-hidden relative max-w-full" style={{ color: 'var(--text-primary)' }}>
+      {!isOnline && (
+        <div className="fixed top-0 left-0 right-0 z-[250] bg-amber-500 text-neutral-900 px-4 py-2.5 flex items-center justify-center gap-2 text-xs font-black shadow-lg uppercase tracking-wider animate-in slide-in-from-top duration-300">
+          <AlertTriangle size={16} className="animate-pulse shrink-0" />
+          <span>Offline Mode Enabled — Dynamic features may be restricted. Showing cached dashboard logs.</span>
+        </div>
+      )}
       
       {/* MOBILE MENU TOGGLE */}
       <button 

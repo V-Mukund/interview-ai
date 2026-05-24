@@ -1,6 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { MockResult } from './mock-result.entity';
 import Groq from 'groq-sdk';
 
@@ -8,10 +10,12 @@ import Groq from 'groq-sdk';
 export class InterviewService {
   private readonly logger = new Logger(InterviewService.name);
   private groq: Groq | null = null;
+  private activeAiRequests = new Map<string, Promise<any>>();
 
   constructor(
     @InjectRepository(MockResult)
     private mockResultRepository: Repository<MockResult>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     const apiKey = process.env.GROQ_API_KEY;
     if (apiKey) {
@@ -58,103 +62,44 @@ export class InterviewService {
   }
 
   async generateQuestions(data: { role: string, difficulty: string, company: string }): Promise<string[]> {
-    this.logger.log(`Generating AI questions for ${data.role} at ${data.company} (${data.difficulty})`);
-
-    if (!this.groq) {
-      this.logger.warn('Groq not initialized. Using fallback question bank.');
-      return this.getFallbackQuestions(data.role, data.company);
-    }
-
-    try {
-      const prompt = `
-You are an AI interview question generator.
-
-Generate interview questions based on:
-Company: ${data.company}
-Role: ${data.role}
-Difficulty: ${data.difficulty}
-
-Rules:
-1. Each company and each role must always receive a different set of questions.
-2. Do not repeat the same questions for different companies.
-3. Do not repeat the same questions for different roles.
-4. Generate questions that match ${data.company}'s interview style.
-5. Generate questions that match the ${data.role} required skills.
-6. Include exactly 5 questions.
-7. Questions must be practical, clear, and interview-ready.
-8. Mix question types: Technical, Problem Solving, Scenario, Project, Behavioral.
-9. Also generate an expected answer for every question.
-10. Keep the expected answer accurate and concise.
-
-Return only valid JSON in this exact format, nothing else:
-
-{
-  "company": "${data.company}",
-  "role": "${data.role}",
-  "difficulty": "${data.difficulty}",
-  "questions": [
-    {
-      "id": 1,
-      "question": "...",
-      "type": "Technical",
-      "expectedAnswer": "...",
-      "evaluationKeywords": ["keyword1", "keyword2", "keyword3"]
-    }
-  ]
-}
-
-The question set must be unique for the combination: ${data.company} + ${data.role}.
-`;
-
-      const chatCompletion = await this.groq.chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
-        model: 'llama-3.3-70b-versatile',
-        response_format: { type: 'json_object' },
-      });
-
-      const text = chatCompletion.choices[0]?.message?.content?.trim() || '{}';
-      const parsed = JSON.parse(text);
-
-      // Return just the question strings (for backward compat with test page)
-      if (Array.isArray(parsed?.questions)) {
-        // Store full question data for the test page to use
-        return parsed.questions.map((q: any) => q.question);
-      }
-
-      throw new Error('Unexpected response format from AI');
-    } catch (err: any) {
-      this.logger.warn(`AI question generation failed (${err.message}). Using fallback.`);
-      return this.getFallbackQuestions(data.role, data.company);
-    }
+    const meta = await this.generateQuestionsWithMeta(data);
+    return (meta.questions || []).map((q: any) => q.question);
   }
 
   async generateQuestionsWithMeta(data: { role: string, difficulty: string, company: string }) {
-    this.logger.log(`Generating full question metadata for ${data.role} at ${data.company}`);
+    const r = (data.role || '').toLowerCase().trim();
+    const c = (data.company || '').toLowerCase().trim();
+    const d = (data.difficulty || '').toLowerCase().trim();
+    const cacheKey = `questions:${r}:${c}:${d}`;
 
-    if (!this.groq) {
-      const questions = this.getFallbackQuestions(data.role, data.company);
-      return { questions: questions.map((q, i) => ({ id: i + 1, question: q, type: 'Technical', expectedAnswer: '', evaluationKeywords: [] })) };
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) {
+      this.logger.log(`Questions retrieved from cache for ${r} at ${c} (${d})`);
+      return cached;
     }
 
-    try {
-      const prompt = `
-You are an AI interview question generator.
+    if (this.activeAiRequests.has(cacheKey)) {
+      this.logger.log(`Active questions generation request in progress for ${r} at ${c} (${d}). Deduplicating...`);
+      return this.activeAiRequests.get(cacheKey);
+    }
 
-Generate interview questions based on:
-Company: ${data.company}
+    const promise = (async () => {
+      this.logger.log(`Generating full question metadata for ${data.role} at ${data.company}`);
+
+      if (!this.groq) {
+        const fallback = this.getFallbackQuestions(data.role, data.company);
+        return { questions: fallback.map((q, i) => ({ id: i + 1, question: q, type: 'Technical', expectedAnswer: '', evaluationKeywords: [] })) };
+      }
+
+      try {
+        const prompt = `
+You are an AI interview question generator.
+Generate exactly 5 practical, clear interview questions unique to:
+Company: ${data.company} (match interview style)
 Role: ${data.role}
 Difficulty: ${data.difficulty}
 
-Rules:
-1. Generate questions unique to ${data.company} + ${data.role} combination.
-2. Match ${data.company}'s known interview style and culture.
-3. Match required skills for a ${data.role} engineer.
-4. Include exactly 5 questions.
-5. Mix: Technical, Problem Solving, Scenario, Project, Behavioral.
-6. Include a concise expected answer and evaluation keywords per question.
-
-Return only valid JSON, nothing else:
-
+Return ONLY a valid JSON object in this format:
 {
   "company": "${data.company}",
   "role": "${data.role}",
@@ -162,28 +107,37 @@ Return only valid JSON, nothing else:
   "questions": [
     {
       "id": 1,
-      "question": "...",
+      "question": "question text",
       "type": "Technical",
-      "expectedAnswer": "...",
-      "evaluationKeywords": ["keyword1", "keyword2", "keyword3"]
+      "expectedAnswer": "concise expected answer (1-2 sentences)",
+      "evaluationKeywords": ["keyword1", "keyword2"]
     }
   ]
 }
 `;
 
-      const chatCompletion = await this.groq.chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
-        model: 'llama-3.3-70b-versatile',
-        response_format: { type: 'json_object' },
-      });
+        const chatCompletion = await this.groq.chat.completions.create({
+          messages: [{ role: 'user', content: prompt }],
+          model: 'llama-3.3-70b-versatile',
+          response_format: { type: 'json_object' },
+        });
 
-      const text = chatCompletion.choices[0]?.message?.content?.trim() || '{}';
-      return JSON.parse(text);
-    } catch (err: any) {
-      this.logger.warn(`Full metadata generation failed (${err.message}). Returning minimal fallback.`);
-      const questions = this.getFallbackQuestions(data.role, data.company);
-      return { questions: questions.map((q, i) => ({ id: i + 1, question: q, type: 'Technical', expectedAnswer: '', evaluationKeywords: [] })) };
-    }
+        const text = chatCompletion.choices[0]?.message?.content?.trim() || '{}';
+        const parsed = JSON.parse(text);
+        
+        await this.cacheManager.set(cacheKey, parsed, 86400 * 1000); // Cache for 24 hours
+        return parsed;
+      } catch (err: any) {
+        this.logger.warn(`Full metadata generation failed (${err.message}). Returning fallback.`);
+        const fallback = this.getFallbackQuestions(data.role, data.company);
+        return { questions: fallback.map((q, i) => ({ id: i + 1, question: q, type: 'Technical', expectedAnswer: '', evaluationKeywords: [] })) };
+      } finally {
+        this.activeAiRequests.delete(cacheKey);
+      }
+    })();
+
+    this.activeAiRequests.set(cacheKey, promise);
+    return promise;
   }
 
 
@@ -285,6 +239,11 @@ Return only valid JSON in this exact format, nothing else:
         timestamp: new Date()
       });
 
+      // Cache Invalidation
+      await this.cacheManager.del(`dashboard-stats:${userId}:general`);
+      await this.cacheManager.del(`dashboard-stats:${userId}:interviews`);
+      this.logger.log(`Invalidated dashboard stats cache for user: ${userId}`);
+
       return {
         ...parsed,
         id: savedResult.id
@@ -317,6 +276,13 @@ Return only valid JSON in this exact format, nothing else:
   }
 
   async getPerformance(userId: number, interviewId: number) {
+    const cacheKey = `performance-report:${userId}:${interviewId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) {
+      this.logger.log(`Performance report retrieved from cache: ${cacheKey}`);
+      return cached;
+    }
+
     const result = await this.mockResultRepository.findOne({
       where: { id: interviewId, user: { id: userId } }
     });
@@ -325,9 +291,10 @@ Return only valid JSON in this exact format, nothing else:
       throw new Error('Interview assessment report not found');
     }
 
+    let report;
     try {
       const parsed = typeof result.evaluation === 'string' ? JSON.parse(result.evaluation) : result.evaluation;
-      return {
+      report = {
         id: result.id,
         company: result.company,
         role: result.role,
@@ -335,7 +302,7 @@ Return only valid JSON in this exact format, nothing else:
         ...parsed
       };
     } catch (e) {
-      return {
+      report = {
         id: result.id,
         company: result.company,
         role: result.role,
@@ -345,9 +312,19 @@ Return only valid JSON in this exact format, nothing else:
         hiringReadiness: result.score >= 80 ? 'Strong Candidate' : result.score >= 65 ? 'Job Ready' : 'Improving'
       };
     }
+
+    await this.cacheManager.set(cacheKey, report, 86400 * 1000); // 24 hours
+    return report;
   }
 
   async getDashboardStats(userId: number) {
+    const cacheKey = `dashboard-stats:${userId}:general`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) {
+      this.logger.log(`Dashboard general stats retrieved from cache for user: ${userId}`);
+      return cached;
+    }
+
     const results = await this.mockResultRepository.find({
       where: { user: { id: userId } },
       order: { timestamp: 'DESC' }
@@ -401,7 +378,7 @@ Return only valid JSON in this exact format, nothing else:
       aiRating: r.score >= 80 ? 'Strong' : r.score >= 60 ? 'Average' : 'Weak'
     }));
 
-    return {
+    const dashboardData = {
       overview: {
         totalInterviews,
         averageScore,
@@ -420,6 +397,9 @@ Return only valid JSON in this exact format, nothing else:
       },
       recentInterviews
     };
+
+    await this.cacheManager.set(cacheKey, dashboardData, 30 * 1000); // 30 seconds TTL
+    return dashboardData;
   }
 
   async deleteHistory(userId: number, interviewIds: (string | number)[]) {
@@ -434,11 +414,26 @@ Return only valid JSON in this exact format, nothing else:
     const userRecordIds = userRecords.map(r => r.id);
     if (userRecordIds.length > 0) {
       await this.mockResultRepository.delete(userRecordIds);
+      
+      // Invalidate caches
+      await this.cacheManager.del(`dashboard-stats:${userId}:general`);
+      await this.cacheManager.del(`dashboard-stats:${userId}:interviews`);
+      for (const recordId of userRecordIds) {
+        await this.cacheManager.del(`performance-report:${userId}:${recordId}`);
+      }
+      this.logger.log(`Invalidated dashboard stats and performance reports cache for user: ${userId}`);
     }
     return { success: true, deletedCount: userRecordIds.length };
   }
 
   async getDashboardInterviewStats(userId: number) {
+    const cacheKey = `dashboard-stats:${userId}:interviews`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) {
+      this.logger.log(`Dashboard interview stats retrieved from cache for user: ${userId}`);
+      return cached;
+    }
+
     const results = await this.mockResultRepository.find({
       where: { user: { id: userId } },
       order: { timestamp: 'DESC' }
@@ -532,7 +527,7 @@ Return only valid JSON in this exact format, nothing else:
       }
     });
 
-    return {
+    const interviewStats = {
       totalInterviews,
       todayInterviews,
       weeklyInterviews,
@@ -542,5 +537,8 @@ Return only valid JSON in this exact format, nothing else:
       dailyStats,
       mostActiveDay
     };
+
+    await this.cacheManager.set(cacheKey, interviewStats, 30 * 1000); // 30 seconds TTL
+    return interviewStats;
   }
 }

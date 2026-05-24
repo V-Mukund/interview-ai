@@ -32,8 +32,9 @@ export class AiService {
   async generateExplanation(concept: string): Promise<string> {
     try {
       const response = await this.groq.chat.completions.create({
-        messages: [{ role: 'user', content: `Provide a concise, easy-to-understand explanation for the following technical concept: ${concept}. Include a simple analogy if possible.` }],
+        messages: [{ role: 'user', content: `Explain the technical concept "${concept}" in under 150 words. Include a simple 1-sentence real-world analogy.` }],
         model: 'llama-3.1-8b-instant',
+        max_tokens: 250,
       });
       return response.choices[0]?.message?.content || 'Explanation could not be generated.';
     } catch (error) {
@@ -45,8 +46,9 @@ export class AiService {
   async generateCheatSheet(topic: string, content: string): Promise<string> {
     try {
       const response = await this.groq.chat.completions.create({
-        messages: [{ role: 'user', content: `Create a quick cheat sheet with bullet points for the following topic: ${topic}. Use this context: ${content}` }],
+        messages: [{ role: 'user', content: `Create a bulleted cheat sheet for topic "${topic}". Max 5 practical points. Max 15 words per bullet. Context: ${content}` }],
         model: 'llama-3.1-8b-instant',
+        max_tokens: 300,
       });
       return response.choices[0]?.message?.content || 'Cheat sheet could not be generated.';
     } catch (error) {
@@ -58,13 +60,16 @@ export class AiService {
   async generatePracticeQuestions(topic: string, content: string): Promise<any[]> {
     try {
       const response = await this.groq.chat.completions.create({
-        messages: [{ role: 'user', content: `Generate exactly 10 practice interview questions based on this topic: ${topic}. Context: ${content}. Return ONLY a valid JSON array of objects, with each object containing EXACTLY these keys: "question", "answer", "explanation", "difficulty" (Easy, Medium, Hard). Do not include markdown formatting or any other text.` }],
+        messages: [{ role: 'user', content: `Generate 10 questions on: ${topic}. Context: ${content}. Return ONLY a JSON object: {"questions": [{"question": "...", "answer": "max 2 sentences", "explanation": "max 2 sentences", "difficulty": "Easy|Medium|Hard"}]}` }],
         model: 'llama-3.1-8b-instant',
+        max_tokens: 1500,
+        response_format: { type: 'json_object' },
       });
-      const text = response.choices[0]?.message?.content || '[]';
+      const text = response.choices[0]?.message?.content || '{"questions":[]}';
       try {
         const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(jsonStr);
+        const parsed = JSON.parse(jsonStr);
+        return Array.isArray(parsed) ? parsed : (parsed.questions || []);
       } catch (e) {
         return [{ question: `What is the main idea behind ${topic}?`, answer: 'Please refer to the notes.', explanation: 'Parsing error occurred.', difficulty: 'Medium' }];
       }
@@ -78,8 +83,9 @@ export class AiService {
     try {
       const areas = weakAreas.join(', ');
       const response = await this.groq.chat.completions.create({
-        messages: [{ role: 'user', content: `I need to improve my skills in: ${areas}. Generate a brief 3-step learning roadmap for me.` }],
+        messages: [{ role: 'user', content: `Create a brief 3-step roadmap to improve in: ${areas}. Limit each step to a maximum of 2 direct sentences.` }],
         model: 'llama-3.1-8b-instant',
+        max_tokens: 300,
       });
       return response.choices[0]?.message?.content || 'Roadmap could not be generated.';
     } catch (error) {

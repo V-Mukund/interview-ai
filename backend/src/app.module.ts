@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CacheModule } from '@nestjs/cache-manager';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
@@ -10,6 +11,11 @@ import { AppController } from './app.controller';
 
 @Module({
   imports: [
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 60, // default short TTL of 60 seconds
+      max: 200, // max 200 items in memory to be lightweight
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '../.env',

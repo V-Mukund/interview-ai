@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Filter, BookOpen, Star, Clock, BrainCircuit, X, Play, Zap, FileText, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
@@ -35,6 +35,10 @@ export default function PrepDashboard() {
   // Toast
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
 
+  // Lazy loading pagination for categories
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
+  const isFetchingRef = useRef(false);
+
   const categories = ['All', 'DSA', 'DBMS', 'Operating Systems', 'Computer Networks', 'SQL', 'System Design', 'HR Questions', 'Aptitude', 'Behavioral Questions', 'Company-Specific Preparation'];
   const difficulties = ['All', 'Beginner', 'Intermediate', 'Advanced'];
   const companies = ['All', 'Google', 'Amazon', 'Meta', 'Netflix', 'Apple', 'Microsoft', 'TCS', 'Standard'];
@@ -45,16 +49,41 @@ export default function PrepDashboard() {
   }, []);
 
   const fetchData = async () => {
-    setIsLoading(true);
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
+    // Load from LocalStorage Cache first (Instant render!)
+    try {
+      const cachedMats = localStorage.getItem('prep_materials');
+      const cachedProg = localStorage.getItem('prep_progress');
+      const cachedBook = localStorage.getItem('prep_bookmarks');
+      const cachedRec = localStorage.getItem('prep_recently_viewed');
+
+      if (cachedMats) {
+        const parsed = JSON.parse(cachedMats);
+        setMaterials(parsed);
+        setFilteredMaterials(parsed);
+      }
+      if (cachedProg) setProgress(JSON.parse(cachedProg));
+      if (cachedBook) setBookmarks(JSON.parse(cachedBook));
+      if (cachedRec) setRecentlyViewed(JSON.parse(cachedRec));
+      
+      // If we had cache, bypass show full-page loading spinner to avoid flashes
+      if (cachedMats) {
+        setIsLoading(false);
+      }
+    } catch (e) {
+      console.warn('LocalStorage read failed:', e);
+    }
+
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      isFetchingRef.current = false;
+      return;
+    }
 
     try {
-      await fetch(`${baseUrl}/prep/seed`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
+      // NOTE: Removed redundant /prep/seed call because backend handles lazy seeding!
       const [matRes, progRes, bookRes, recRes] = await Promise.all([
         fetch(`${baseUrl}/prep/materials`, { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch(`${baseUrl}/prep/progress`, { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -66,15 +95,29 @@ export default function PrepDashboard() {
         const data = await matRes.json();
         setMaterials(data);
         setFilteredMaterials(data);
+        localStorage.setItem('prep_materials', JSON.stringify(data));
       }
-      if (progRes.ok) setProgress(await progRes.json());
-      if (bookRes.ok) setBookmarks(await bookRes.json());
-      if (recRes.ok) setRecentlyViewed(await recRes.json());
+      if (progRes.ok) {
+        const progData = await progRes.json();
+        setProgress(progData);
+        localStorage.setItem('prep_progress', JSON.stringify(progData));
+      }
+      if (bookRes.ok) {
+        const bookData = await bookRes.json();
+        setBookmarks(bookData);
+        localStorage.setItem('prep_bookmarks', JSON.stringify(bookData));
+      }
+      if (recRes.ok) {
+        const recData = await recRes.json();
+        setRecentlyViewed(recData);
+        localStorage.setItem('prep_recently_viewed', JSON.stringify(recData));
+      }
     } catch (err) {
       console.error('Failed to fetch prep data:', err);
-      showToast('Failed to load data', 'error');
+      showToast('Failed to load fresh data', 'error');
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -262,6 +305,10 @@ export default function PrepDashboard() {
             {categories.filter(c => c !== 'All').map(cat => {
               const categoryMaterials = filteredMaterials.filter(m => m.category === cat);
               if (categoryMaterials.length === 0) return null;
+              
+              const limit = visibleCounts[cat] || 6;
+              const displayedMaterials = categoryMaterials.slice(0, limit);
+
               return (
                 <div key={cat} className="flex flex-col gap-6">
                   <div className="flex items-center gap-3 pb-2 border-b border-white/10">
@@ -269,7 +316,7 @@ export default function PrepDashboard() {
                     <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-xs font-bold text-neutral-400">{categoryMaterials.length}</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {categoryMaterials.map(mat => (
+                    {displayedMaterials.map(mat => (
                       <div 
                         key={mat.id} 
                         onClick={() => handleOpenMaterial(mat)}
@@ -310,6 +357,16 @@ export default function PrepDashboard() {
                       </div>
                     ))}
                   </div>
+                  {categoryMaterials.length > limit && (
+                    <div className="flex justify-center mt-2">
+                      <button
+                        onClick={() => setVisibleCounts(prev => ({ ...prev, [cat]: limit + 6 }))}
+                        className="px-5 py-2.5 bg-neutral-900 border border-white/10 hover:border-purple-500/30 text-white rounded-2xl text-xs font-bold transition-all hover:scale-105 active:scale-95 duration-200 shadow-md hover:shadow-purple-900/10 flex items-center gap-1.5"
+                      >
+                        Show More <ChevronDown size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -376,8 +433,31 @@ export default function PrepDashboard() {
               )}
 
               <div className="prose prose-invert prose-p:text-neutral-300 prose-headings:text-white max-w-none">
-                <h3 className="text-lg font-black text-white border-b border-white/10 pb-2 mb-4">Study Notes</h3>
-                <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">{selectedMaterial.content}</p>
+                {selectedMaterial.overview ? (
+                  <>
+                    <h3 className="text-lg font-black text-white border-b border-white/10 pb-2 mb-4">Overview</h3>
+                    <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">{selectedMaterial.overview}</p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-black text-white border-b border-white/10 pb-2 mb-4">Study Notes</h3>
+                    <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">{selectedMaterial.content}</p>
+                  </>
+                )}
+
+                {selectedMaterial.coreConcepts && selectedMaterial.coreConcepts.length > 0 && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-black text-white border-b border-white/10 pb-2 mb-4">Core Concepts</h3>
+                    <div className="flex flex-col gap-4">
+                      {selectedMaterial.coreConcepts.map((concept: any, idx: number) => (
+                        <div key={idx} className="p-5 rounded-2xl bg-white/5 border border-white/10">
+                          <h4 className="text-base font-bold text-white mb-2 mt-0">{concept.title}</h4>
+                          <p className="text-sm text-neutral-400 m-0 leading-relaxed">{concept.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {activeQuestions && activeQuestions.length > 0 && (
                   <div className="mt-12 border-t border-white/10 pt-8">

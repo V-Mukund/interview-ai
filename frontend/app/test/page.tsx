@@ -36,6 +36,24 @@ export default function TestPage() {
     setTargetCompany(company);
     setTargetDifficulty(difficulty);
 
+    const sessionKey = `active_session_${role}_${company}_${difficulty}`;
+    const savedSession = sessionStorage.getItem(sessionKey);
+
+    if (savedSession) {
+      try {
+        const { savedQuestions, savedAnswers, savedIndex } = JSON.parse(savedSession);
+        if (Array.isArray(savedQuestions) && savedQuestions.length > 0) {
+          setQuestions(savedQuestions);
+          setAnswers(savedAnswers || {});
+          setCurrentIndex(savedIndex || 0);
+          setIsLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.warn('Failed to parse saved session:', e);
+      }
+    }
+
     const fetchQuestions = async () => {
       setIsLoading(true);
       const token = localStorage.getItem('token');
@@ -58,6 +76,12 @@ export default function TestPage() {
             initialAnswers[q.id] = '';
           });
           setAnswers(initialAnswers);
+          
+          sessionStorage.setItem(sessionKey, JSON.stringify({
+            savedQuestions: data,
+            savedAnswers: initialAnswers,
+            savedIndex: 0
+          }));
         } else {
           throw new Error('Empty questions data');
         }
@@ -71,6 +95,12 @@ export default function TestPage() {
           initialAnswers[q.id] = '';
         });
         setAnswers(initialAnswers);
+
+        sessionStorage.setItem(sessionKey, JSON.stringify({
+          savedQuestions: fallback,
+          savedAnswers: initialAnswers,
+          savedIndex: 0
+        }));
       } finally {
         setIsLoading(false);
       }
@@ -78,6 +108,17 @@ export default function TestPage() {
 
     fetchQuestions();
   }, []);
+
+  // Update sessionStorage on answers or index updates
+  useEffect(() => {
+    if (questions.length === 0) return;
+    const sessionKey = `active_session_${targetRole}_${targetCompany}_${targetDifficulty}`;
+    sessionStorage.setItem(sessionKey, JSON.stringify({
+      savedQuestions: questions,
+      savedAnswers: answers,
+      savedIndex: currentIndex
+    }));
+  }, [answers, currentIndex, questions, targetRole, targetCompany, targetDifficulty]);
 
   const getFallbackQuestions = (role: string, company: string): Question[] => {
     const roleKey = role.toLowerCase();
@@ -160,6 +201,10 @@ export default function TestPage() {
       if (!res.ok) throw new Error('Submission failed');
       const data = await res.json();
       
+      // Clear sessionStorage backup upon successful submission
+      const sessionKey = `active_session_${targetRole}_${targetCompany}_${targetDifficulty}`;
+      sessionStorage.removeItem(sessionKey);
+
       localStorage.setItem('last_result', JSON.stringify({ evaluation: JSON.stringify(data) }));
       if (data.id) {
         router.push(`/result?id=${data.id}`);
@@ -197,6 +242,8 @@ export default function TestPage() {
           <button 
             onClick={() => {
               if (confirm("Are you sure you want to exit the assessment? Your progress will be lost.")) {
+                const sessionKey = `active_session_${targetRole}_${targetCompany}_${targetDifficulty}`;
+                sessionStorage.removeItem(sessionKey);
                 router.push('/chatbot');
               }
             }}
