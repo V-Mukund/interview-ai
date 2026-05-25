@@ -4,7 +4,7 @@ const withPWA = withPWAInit({
   dest: 'public',
   register: true,
   skipWaiting: true,
- disable: false,
+  disable: false,
 });
 
 const nextConfig = {
