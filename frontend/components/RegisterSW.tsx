@@ -4,19 +4,12 @@ import { useEffect } from "react";
 
 export default function RegisterSW() {
   useEffect(() => {
-    async function registerSW() {
-      if ("serviceWorker" in navigator) {
-        try {
-          const registration = await navigator.serviceWorker.register("/sw.js");
-
-          console.log("SW REGISTERED:", registration);
-        } catch (error) {
-          console.error("SW FAILED:", error);
-        }
-      }
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => console.log("SW registered successfully:", reg))
+        .catch((err) => console.error("SW registration failed:", err));
     }
-
-    registerSW();
   }, []);
 
   return null;
