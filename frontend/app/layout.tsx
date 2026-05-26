@@ -31,9 +31,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-   <body>
-  <RegisterSW />
-  {children}
-</body>
+    <html lang="en">
+      <body className={inter.className}>
+        <ThemeProvider>
+          <RegisterSW />
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

@@ -1,12 +1,17 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 type Theme = 'dark' | 'light';
 
 interface ThemeContextType {
   theme: Theme;
-  setTheme: (t: Theme) => void;
+  setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
 }
 
@@ -16,39 +21,63 @@ const ThemeContext = createContext<ThemeContextType>({
   toggleTheme: () => {},
 });
 
-export function useTheme() {
-  return useContext(ThemeContext);
-}
+export const useTheme = () => useContext(ThemeContext);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [theme, setThemeState] = useState<Theme>('dark');
 
-  // On mount: read persisted theme from localStorage
+  // Apply theme to HTML
+  const applyTheme = (newTheme: Theme) => {
+    const html = document.documentElement;
+
+    html.classList.remove('light', 'dark');
+    html.classList.add(newTheme);
+
+    // Safe body styling to preserve other classes (e.g. font classes)
+    document.body.classList.remove('bg-black', 'bg-white', 'text-white', 'text-black');
+    document.body.classList.add(
+      newTheme === 'dark' ? 'bg-black' : 'bg-white',
+      newTheme === 'dark' ? 'text-white' : 'text-black'
+    );
+  };
+
+  // Load saved theme on startup
   useEffect(() => {
-    const saved = localStorage.getItem('app-theme') as Theme | null;
-    const resolved: Theme = saved === 'light' ? 'light' : 'dark';
-    setThemeState(resolved);
-    applyTheme(resolved);
+    const savedTheme =
+      (localStorage.getItem('app-theme') as Theme) || 'dark';
+
+    setThemeState(savedTheme);
+    applyTheme(savedTheme);
   }, []);
 
-  function applyTheme(t: Theme) {
-    const html = document.documentElement;
-    html.classList.remove('dark', 'light');
-    html.classList.add(t);
-  }
+  // Set theme
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
 
-  function setTheme(t: Theme) {
-    setThemeState(t);
-    applyTheme(t);
-    localStorage.setItem('app-theme', t);
-  }
+    localStorage.setItem('app-theme', newTheme);
 
-  function toggleTheme() {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  }
+    applyTheme(newTheme);
+  };
+
+  // Toggle theme
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+
+    setTheme(newTheme);
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        setTheme,
+        toggleTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
