@@ -26,28 +26,8 @@ const withPWA = withPWAInit({
   dest: "public",
   register: true,
   skipWaiting: true,
-  disable: false,
-buildExcludes: [/app-build-manifest\.json$/],
-  runtimeCaching: [
-    {
-      urlPattern: /^http:\/\/localhost:8000\/.*/i,
-      handler: "NetworkFirst",
-      options: {
-        cacheName: "interview-ai-api-cache",
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60,
-        },
-      },
-    },
-    {
-      urlPattern: /^http:\/\/localhost:3000\/.*/i,
-      handler: "StaleWhileRevalidate",
-      options: {
-        cacheName: "interview-ai-page-cache",
-      },
-    },
-  ],
+  disable: process.env.NODE_ENV === "development",
+  buildExcludes: [/app-build-manifest\.json$/],
 });
 
 const nextConfig = {
