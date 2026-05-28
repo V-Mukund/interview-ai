@@ -194,6 +194,34 @@ export default function PrepDashboard() {
     }
   };
 
+  const pollJobStatus = async (jobId: string, token: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`${baseUrl}/queue/status/${jobId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (!res.ok) {
+            clearInterval(interval);
+            reject(new Error('Failed to get job status'));
+            return;
+          }
+          const data = await res.json();
+          if (data.state === 'completed') {
+            clearInterval(interval);
+            resolve(data.result);
+          } else if (data.state === 'failed') {
+            clearInterval(interval);
+            reject(new Error(data.failedReason || 'Job failed in background'));
+          }
+        } catch (err) {
+          clearInterval(interval);
+          reject(err);
+        }
+      }, 2000);
+    });
+  };
+
   const handleAiAction = async (action: 'explain' | 'cheatsheet') => {
     if (!selectedMaterial) return;
     setAiLoading(true);
@@ -213,15 +241,20 @@ export default function PrepDashboard() {
       
       if (res.ok) {
         const data = await res.json();
-        setAiTitle(action === 'explain' ? 'AI Explanation' : 'AI Cheat Sheet');
-        setAiContent(data.content);
-        showToast('AI generation complete', 'success');
+        if (data.jobId) {
+          const result = await pollJobStatus(data.jobId, token || '');
+          setAiTitle(action === 'explain' ? 'AI Explanation' : 'AI Cheat Sheet');
+          setAiContent(result.content);
+          showToast('AI generation complete', 'success');
+        } else {
+          showToast('AI generation failed', 'error');
+        }
       } else {
         showToast('AI generation failed', 'error');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      showToast('AI request failed', 'error');
+      showToast(err.message || 'AI request failed', 'error');
     } finally {
       setAiLoading(false);
     }
@@ -232,27 +265,35 @@ export default function PrepDashboard() {
     setGeneratingQuestions(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${baseUrl}/prep/ai/questions`, {
+      // Use the standardized async queue endpoint
+      const res = await fetch(`${baseUrl}/prep/questions/async`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: selectedMaterial.title, content: selectedMaterial.content })
+        body: JSON.stringify({
+          role: selectedMaterial.title,
+          company: 'Standard',
+          difficulty: 'Intermediate',
+        })
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.questions && data.questions.length > 0) {
-          setActiveQuestions(data.questions);
-          setCurrentQuestionIndex(0);
-          setShowAnswer(false);
-          showToast('Generated 10 new questions!', 'success');
-        } else {
-          showToast('No questions generated', 'error');
-        }
+
+      if (!res.ok) throw new Error('Failed to start question generation');
+
+      const data = await res.json();
+      if (!data.jobId) throw new Error('No jobId returned from server');
+
+      // Poll GET /queue/status/:jobId until completed
+      const result = await pollJobStatus(data.jobId, token || '');
+      if (result.questions && result.questions.length > 0) {
+        setActiveQuestions(result.questions);
+        setCurrentQuestionIndex(0);
+        setShowAnswer(false);
+        showToast('Generated new questions!', 'success');
       } else {
-        showToast('Failed to generate questions', 'error');
+        showToast('No questions generated', 'error');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      showToast('Generation request failed', 'error');
+      showToast(err.message || 'Generation request failed', 'error');
     } finally {
       setGeneratingQuestions(false);
     }
@@ -477,7 +518,8 @@ export default function PrepDashboard() {
                       <div className="p-8 rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center justify-center animate-pulse">
                         <div className="w-full max-w-md h-4 bg-white/10 rounded-full mb-4"></div>
                         <div className="w-3/4 h-4 bg-white/10 rounded-full mb-8"></div>
-                        <div className="w-full h-24 bg-white/5 rounded-xl"></div>
+                        <div className="w-full h-24 bg-white/5 rounded-xl mb-4"></div>
+                        <p className="text-xs font-bold text-purple-400 text-center tracking-wide uppercase">Queueing Task & Polling Background Worker...</p>
                       </div>
                     ) : activeQuestions[currentQuestionIndex] ? (
                       <div className="p-6 sm:p-8 rounded-3xl bg-neutral-900 border border-white/10 shadow-xl transition-all duration-300 relative overflow-hidden">

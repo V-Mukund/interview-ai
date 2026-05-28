@@ -13,8 +13,8 @@ interface Question {
   type: string;
 }
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
-
+// const baseUrl = 'http://localhost:8000';
+const baseUrl = 'http://localhost:8000';
 export default function TestPage() {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -22,6 +22,7 @@ export default function TestPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   const [targetRole, setTargetRole] = useState('Software Developer');
   const [targetCompany, setTargetCompany] = useState('Standard');
@@ -53,59 +54,100 @@ export default function TestPage() {
         console.warn('Failed to parse saved session:', e);
       }
     }
+const fetchQuestions = async () => {
+  setIsLoading(true);
+  setErrorMsg(null);
+  const token = localStorage.getItem('token');
 
-    const fetchQuestions = async () => {
-      setIsLoading(true);
-      const token = localStorage.getItem('token');
-      try {
-        const res = await fetch(
-          `${baseUrl}/prep/questions?role=${encodeURIComponent(role)}&company=${encodeURIComponent(company)}&difficulty=${encodeURIComponent(difficulty)}`,
-          {
-            headers: { 'Authorization': `Bearer ${token}` }
-          }
-        );
-        
-        if (!res.ok) throw new Error('Failed to fetch questions');
-        const data = await res.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-          setQuestions(data);
-          // Initialize answers object
-          const initialAnswers: Record<number, string> = {};
-          data.forEach(q => {
-            initialAnswers[q.id] = '';
+  try {
+    const res = await fetch(`${baseUrl}/prep/questions/async`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        role,
+        company,
+        difficulty,
+      }),
+    });
+
+    if (!res.ok) throw new Error('Failed to start question generation');
+
+    const data = await res.json();
+
+    if (!data.jobId) {
+      throw new Error('No jobId returned from server');
+    }
+
+    const jobId = data.jobId;
+
+    const result = await new Promise<any>((resolve, reject) => {
+      const interval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`${baseUrl}/queue/status/${jobId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
           });
-          setAnswers(initialAnswers);
-          
-          sessionStorage.setItem(sessionKey, JSON.stringify({
-            savedQuestions: data,
-            savedAnswers: initialAnswers,
-            savedIndex: 0
-          }));
-        } else {
-          throw new Error('Empty questions data');
+
+          if (!statusRes.ok) {
+            clearInterval(interval);
+            reject(new Error('Failed to poll queue status'));
+            return;
+          }
+
+          const statusData = await statusRes.json();
+          const currentState = statusData.state || statusData.status;
+
+          if (currentState === 'completed') {
+            clearInterval(interval);
+            resolve(statusData.result);
+          } else if (currentState === 'failed') {
+            clearInterval(interval);
+            reject(new Error('Question generation failed'));
+          }
+        } catch (err) {
+          clearInterval(interval);
+          reject(err);
         }
-      } catch (err) {
-        console.error('Questions fetch failed, using fallbacks:', err);
-        // Fallback questions
-        const fallback = getFallbackQuestions(role, company);
-        setQuestions(fallback);
-        const initialAnswers: Record<number, string> = {};
-        fallback.forEach(q => {
-          initialAnswers[q.id] = '';
-        });
-        setAnswers(initialAnswers);
+      }, 3000);
+    });
 
-        sessionStorage.setItem(sessionKey, JSON.stringify({
-          savedQuestions: fallback,
-          savedAnswers: initialAnswers,
-          savedIndex: 0
-        }));
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const generatedQuestions = result?.questions || [];
 
+    const mapped = generatedQuestions.map((q: any, index: number) => ({
+      id: q.id || index + 1,
+      question: q.question,
+      type: q.type || 'text',
+    }));
+
+    if (mapped.length === 0) {
+      throw new Error('Empty questions from AI');
+    }
+
+    setQuestions(mapped);
+
+    const initialAnswers: Record<number, string> = {};
+    mapped.forEach((q: Question) => {
+      initialAnswers[q.id] = '';
+    });
+
+    setAnswers(initialAnswers);
+
+    sessionStorage.setItem(sessionKey, JSON.stringify({
+      savedQuestions: mapped,
+      savedAnswers: initialAnswers,
+      savedIndex: 0,
+    }));
+  } catch (err: any) {
+    console.error('Questions fetch failed:', err);
+    setErrorMsg(err.message || 'Failed to load questions. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
     fetchQuestions();
   }, []);
 
@@ -120,45 +162,6 @@ export default function TestPage() {
     }));
   }, [answers, currentIndex, questions, targetRole, targetCompany, targetDifficulty]);
 
-  const getFallbackQuestions = (role: string, company: string): Question[] => {
-    const roleKey = role.toLowerCase();
-    const banks: Record<string, string[]> = {
-      'frontend': [
-        "Explain the difference between Prototypal and Classical Inheritance in JavaScript.",
-        "How would you build a highly reusable, accessible Modal component in React?",
-        "How do you identify and fix memory leaks or unnecessary re-renders in a large-scale web app?",
-        "A client reports the dashboard is slow when loading 10,000 rows. What is your optimization strategy?",
-        "How would you implement a search-as-you-type feature with debouncing and caching?"
-      ],
-      'backend': [
-        "Explain the CAP Theorem and how it influences your database choice for a global application.",
-        "How would you design a secure JWT-based authentication flow with refresh tokens?",
-        "Describe how you would debug and optimize a slow SQL query causing high CPU usage in production.",
-        "Your server is hit by a sudden 10x traffic spike. What scaling layers do you activate first?",
-        "Design a distributed rate-limiting system that works across multiple geographic regions."
-      ],
-      'fullstack': [
-        "Explain the lifecycle of a request from the browser until it reaches the database and back.",
-        "How do you ensure data consistency between a React frontend and a PostgreSQL backend?",
-        "What is your approach to securing sensitive API keys in a CI/CD pipeline?",
-        "You need to migrate a monolithic app to microservices. How do you handle cross-service communication?",
-        "Build a real-time collaborative document editor using WebSockets and conflict resolution."
-      ]
-    };
-    const matchedRole = Object.keys(banks).find(k => roleKey.includes(k)) || 'frontend';
-    const list = banks[matchedRole] || [
-      "Describe the architecture of a system you recently built.",
-      "How do you ensure code quality in a team environment?",
-      "How do you solve a technical problem when you have no prior experience with the technology?",
-      "You have a tight deadline for a complex feature. How do you prioritize tasks?",
-      "How would you improve the technical performance of your application?"
-    ];
-    return list.map((q, i) => ({
-      id: i + 1,
-      question: q,
-      type: 'text'
-    }));
-  };
 
   const handleAnswerChange = (text: string) => {
     const activeQuestion = questions[currentIndex];
@@ -200,20 +203,55 @@ export default function TestPage() {
 
       if (!res.ok) throw new Error('Submission failed');
       const data = await res.json();
-      
-      // Clear sessionStorage backup upon successful submission
-      const sessionKey = `active_session_${targetRole}_${targetCompany}_${targetDifficulty}`;
-      sessionStorage.removeItem(sessionKey);
 
-      localStorage.setItem('last_result', JSON.stringify({ evaluation: JSON.stringify(data) }));
-      if (data.id) {
-        router.push(`/result?id=${data.id}`);
+      if (data.jobId) {
+        // Poll for evaluation completion
+        const pollJobStatus = async (jobId: string, token: string): Promise<any> => {
+          return new Promise((resolve, reject) => {
+            const interval = setInterval(async () => {
+              try {
+                const statusRes = await fetch(`${baseUrl}/queue/status/${jobId}`, {
+                  headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!statusRes.ok) {
+                  clearInterval(interval);
+                  reject(new Error('Failed to get evaluation status'));
+                  return;
+                }
+                const statusData = await statusRes.json();
+                if (statusData.state === 'completed') {
+                  clearInterval(interval);
+                  resolve(statusData.result);
+                } else if (statusData.state === 'failed') {
+                  clearInterval(interval);
+                  reject(new Error(statusData.failedReason || 'Evaluation failed in background'));
+                }
+              } catch (err) {
+                clearInterval(interval);
+                reject(err);
+              }
+            }, 2000);
+          });
+        };
+
+        const result = await pollJobStatus(data.jobId, token || '');
+        
+        // Clear sessionStorage backup upon successful submission
+        const sessionKey = `active_session_${targetRole}_${targetCompany}_${targetDifficulty}`;
+        sessionStorage.removeItem(sessionKey);
+
+        localStorage.setItem('last_result', JSON.stringify({ evaluation: JSON.stringify(result) }));
+        if (result.id) {
+          router.push(`/result?id=${result.id}`);
+        } else {
+          router.push('/result');
+        }
       } else {
-        router.push('/result');
+        throw new Error('No jobId returned from server');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to submit assessment answers. Please check your connection and try again.');
+      alert(err.message || 'Failed to submit assessment answers. Please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -225,7 +263,24 @@ export default function TestPage() {
         <div className="text-center space-y-4">
           <Loader2 size={40} className="animate-spin text-purple-500 mx-auto" />
           <h2 className="text-lg font-black tracking-tight">Generating Custom AI Assessment...</h2>
-          <p className="text-xs t-text-muted max-w-xs leading-relaxed">Analyzing role profiles and target company cultures to compile premium practical questions.</p>
+          <p className="text-xs t-text-muted max-w-xs leading-relaxed">Task dispatched to Message Queue. Polling background workers for completion...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="min-h-screen t-bg-base t-text-pri flex flex-col items-center justify-center font-sans">
+        <div className="text-center space-y-4 text-red-500">
+          <h2 className="text-lg font-black tracking-tight">Error</h2>
+          <p className="text-sm max-w-xs leading-relaxed">{errorMsg}</p>
+          <button 
+            onClick={() => router.push('/chatbot')}
+            className="px-4 py-2 mt-4 bg-red-500/10 text-red-500 font-bold rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-all"
+          >
+            Go Back
+          </button>
         </div>
       </div>
     );

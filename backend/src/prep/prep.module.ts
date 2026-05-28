@@ -8,12 +8,14 @@ import { PrepController } from './prep.controller';
 import { PrepService } from './prep.service';
 import { AiModule } from '../ai/ai.module';
 import { ChatbotModule } from '../chatbot/chatbot.module';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([PrepMaterial, UserBookmark, UserPrepProgress, UserRecentlyViewed]),
     AiModule,
-    ChatbotModule
+    ChatbotModule,
+    QueueModule,
   ],
   controllers: [PrepController],
   providers: [PrepService],

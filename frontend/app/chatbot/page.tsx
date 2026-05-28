@@ -489,14 +489,55 @@ export default function ChatbotPage() {
             answers: newAnswers
           }),
         });
+
+        if (!res.ok) throw new Error('Submission failed');
         const data = await res.json();
-        setMockReport(data.evaluation);
-        setMockState('finished');
-        
-        const botMsg = { message: data.evaluation, sender: 'bot', timestamp: new Date() };
-        setMessages(prev => [...prev, botMsg]);
+
+        if (data.jobId) {
+          const pollJobStatus = async (jobId: string, token: string): Promise<any> => {
+            return new Promise((resolve, reject) => {
+              const interval = setInterval(async () => {
+                try {
+                  const statusRes = await fetch(`${baseUrl}/queue/status/${jobId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                  });
+                  if (!statusRes.ok) {
+                    clearInterval(interval);
+                    reject(new Error('Failed to get evaluation status'));
+                    return;
+                  }
+                  const statusData = await statusRes.json();
+                  if (statusData.state === 'completed') {
+                    clearInterval(interval);
+                    resolve(statusData.result);
+                  } else if (statusData.state === 'failed') {
+                    clearInterval(interval);
+                    reject(new Error(statusData.failedReason || 'Evaluation failed in background'));
+                  }
+                } catch (err) {
+                  clearInterval(interval);
+                  reject(err);
+                }
+              }, 2000);
+            });
+          };
+
+          const result = await pollJobStatus(data.jobId, token || '');
+          const evalText = typeof result.evaluation === 'string' ? result.evaluation : JSON.stringify(result);
+          setMockReport(evalText);
+          setMockState('finished');
+          
+          const botMsg = { message: evalText, sender: 'bot', timestamp: new Date() };
+          setMessages(prev => [...prev, botMsg]);
+          
+          fetchHistory();
+          fetchCompletedInterviews();
+          fetchDashboardStats();
+        } else {
+          throw new Error('No jobId returned from server');
+        }
       } catch (err: any) {
-        setMockError('Evaluation failed. Your transcript has been saved.');
+        setMockError(err.message || 'Evaluation failed. Your transcript has been saved.');
       } finally {
         setIsLoading(false);
       }

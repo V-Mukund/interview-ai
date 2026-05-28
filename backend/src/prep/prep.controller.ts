@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards, Req } from '@nest
 import { PrepService } from './prep.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { InterviewService } from '../chatbot/interview.service';
+import { QueueService } from '../queue/queue.service';
 
 @Controller('prep')
 @UseGuards(JwtAuthGuard)
@@ -9,6 +10,7 @@ export class PrepController {
   constructor(
     private readonly prepService: PrepService,
     private readonly interviewService: InterviewService,
+    private readonly queueService: QueueService,
   ) {}
 
   @Post('seed')
@@ -62,44 +64,91 @@ export class PrepController {
     @Query('difficulty') difficulty = 'Intermediate',
     @Query('company') company = 'Standard'
   ) {
-    const data = await this.interviewService.generateQuestionsWithMeta({ role, difficulty, company });
-    return data.questions.map(q => ({
-      id: q.id,
-      question: q.question,
-      type: 'text'
-    }));
+    const job = await this.queueService.enqueueGenerateQuestions({ role, difficulty, company });
+    return {
+      jobId: job.id,
+      status: 'queued',
+    };
+  }
+  // Async endpoint to generate questions via BullMQ
+  @Post('questions/async')
+  async generateQuestionsAsync(@Body() body: { role: string; difficulty?: string; company?: string }) {
+    const role = body.role;
+    const difficulty = body.difficulty ?? 'Intermediate';
+    const company = body.company ?? 'Standard';
+    const job = await this.queueService.enqueueGenerateQuestions({ role, difficulty, company });
+    return { jobId: job.id, status: 'queued' };
   }
 
+
   @Post('submit')
-  async submit(@Req() req: any, @Body() body: { role: string, company?: string, answers: { questionId: number, question: string, answer: string }[] }) {
-    const formattedAnswers = body.answers.map(a => ({
-      question: a.question,
-      userAnswer: a.answer
-    }));
-    return this.interviewService.analyze(req.user.userId, {
+  async submit(@Req() req: any, @Body() body: { role: string, company?: string, answers: any[], questions?: string[] }) {
+    let questions: string[] = [];
+    let answers: string[] = [];
+    if (Array.isArray(body.answers) && body.answers.length > 0) {
+      if (typeof body.answers[0] === 'string') {
+        answers = body.answers;
+        questions = body.questions || [];
+      } else {
+        questions = body.answers.map(a => a.question);
+        answers = body.answers.map(a => a.answer || a.userAnswer || '');
+      }
+    }
+    const job = await this.queueService.enqueueEvaluation({
+      userId: req.user.userId || req.user.id,
       company: body.company || 'Standard',
       role: body.role,
-      answers: formattedAnswers
+      questions,
+      answers,
     });
+    return {
+      jobId: job.id,
+      status: 'queued',
+      message: 'Your interview is being evaluated in the background.',
+    };
   }
 
   @Post('ai/explain')
   async explainConcept(@Body('concept') concept: string) {
-    return this.prepService.generateExplanation(concept);
+    const job = await this.queueService.enqueueExplanation({ concept });
+    return {
+      jobId: job.id,
+      status: 'queued',
+    };
   }
 
   @Post('ai/cheat-sheet')
   async generateCheatSheet(@Body() body: { topic: string; content: string }) {
-    return this.prepService.generateCheatSheet(body.topic, body.content);
+    const job = await this.queueService.enqueueCheatSheet({
+      topic: body.topic,
+      content: body.content,
+    });
+    return {
+      jobId: job.id,
+      status: 'queued',
+    };
   }
 
   @Post('ai/questions')
   async generatePracticeQuestions(@Body() body: { topic: string; content: string }) {
-    return this.prepService.generatePracticeQuestions(body.topic, body.content);
+    const job = await this.queueService.enqueueQuestions({
+      topic: body.topic,
+      content: body.content,
+    });
+    return {
+      jobId: job.id,
+      status: 'queued',
+    };
   }
 
   @Post('ai/roadmap')
   async generateRoadmap(@Body('weakAreas') weakAreas: string[]) {
-    return this.prepService.generateRoadmap(weakAreas || []);
+    const job = await this.queueService.enqueueRoadmap({
+      weakAreas: weakAreas || [],
+    });
+    return {
+      jobId: job.id,
+      status: 'queued',
+    };
   }
 }
