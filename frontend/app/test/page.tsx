@@ -29,6 +29,13 @@ export default function TestPage() {
   const [targetDifficulty, setTargetDifficulty] = useState('Intermediate');
 
   useEffect(() => {
+    // Auth check — redirect to login if no token
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/');
+      return;
+    }
+
     const role = localStorage.getItem('target_role') || 'Software Developer';
     const company = localStorage.getItem('target_company') || 'Standard';
     const difficulty = localStorage.getItem('target_difficulty') || 'Intermediate';
@@ -58,6 +65,13 @@ const fetchQuestions = async () => {
   setIsLoading(true);
   setErrorMsg(null);
   const token = localStorage.getItem('token');
+
+  if (!token) {
+    setErrorMsg('Session expired. Please log in again.');
+    setIsLoading(false);
+    router.push('/');
+    return;
+  }
 
   try {
     const res = await fetch(`${baseUrl}/prep/questions/async`, {

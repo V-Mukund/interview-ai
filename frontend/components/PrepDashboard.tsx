@@ -264,6 +264,11 @@ export default function PrepDashboard() {
     if (!selectedMaterial) return;
     setGeneratingQuestions(true);
     const token = localStorage.getItem('token');
+    if (!token) {
+      showToast('Session expired. Please log in again.', 'error');
+      setGeneratingQuestions(false);
+      return;
+    }
     try {
       // Use the standardized async queue endpoint
       const res = await fetch(`${baseUrl}/prep/questions/async`, {
