@@ -11,3 +11,9 @@ dist/
 .DS_Store
 *.log
 docker-compose.override.yml
+
+# PWA generated files (auto-created at build by next-pwa)
+frontend/public/sw.js
+frontend/public/sw.js.map
+frontend/public/workbox-*.js
+frontend/public/workbox-*.js.map

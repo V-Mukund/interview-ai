@@ -24,10 +24,10 @@ export const aiApi: AxiosInstance = axios.create({
   },
 });
 
-// Optional: attach JWT if needed (same logic as api.ts)
+// Attach JWT if needed (same logic as api.ts)
 aiApi.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
     if (token) {
       config.headers = config.headers ?? {};
       config.headers["Authorization"] = `Bearer ${token}`;

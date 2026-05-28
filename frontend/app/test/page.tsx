@@ -13,8 +13,7 @@ interface Question {
   type: string;
 }
 
-// const baseUrl = 'http://localhost:8000';
-const baseUrl = 'http://localhost:8000';
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
 export default function TestPage() {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -87,7 +86,18 @@ const fetchQuestions = async () => {
       }),
     });
 
-    if (!res.ok) throw new Error('Failed to start question generation');
+    if (!res.ok) {
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        setErrorMsg('Session unauthorized or expired. Redirecting to login page...');
+        setTimeout(() => {
+          router.push('/');
+        }, 2500);
+        return;
+      }
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.message || `Server error (${res.status})`);
+    }
 
     const data = await res.json();
 
@@ -96,9 +106,18 @@ const fetchQuestions = async () => {
     }
 
     const jobId = data.jobId;
+    const POLL_INTERVAL = 3000;
+    const MAX_POLLS = 30; // 30 * 3s = 90s max wait
 
     const result = await new Promise<any>((resolve, reject) => {
+      let pollCount = 0;
       const interval = setInterval(async () => {
+        pollCount++;
+        if (pollCount > MAX_POLLS) {
+          clearInterval(interval);
+          reject(new Error('Question generation timed out. Please try again.'));
+          return;
+        }
         try {
           const statusRes = await fetch(`${baseUrl}/queue/status/${jobId}`, {
             headers: {
@@ -107,8 +126,11 @@ const fetchQuestions = async () => {
           });
 
           if (!statusRes.ok) {
-            clearInterval(interval);
-            reject(new Error('Failed to poll queue status'));
+            // Don't immediately fail on transient network errors — retry
+            if (pollCount >= 3) {
+              clearInterval(interval);
+              reject(new Error('Failed to poll queue status'));
+            }
             return;
           }
 
@@ -120,13 +142,17 @@ const fetchQuestions = async () => {
             resolve(statusData.result);
           } else if (currentState === 'failed') {
             clearInterval(interval);
-            reject(new Error('Question generation failed'));
+            reject(new Error(statusData.failedReason || 'Question generation failed'));
           }
-        } catch (err) {
-          clearInterval(interval);
-          reject(err);
+          // else: still waiting/active — continue polling
+        } catch (err: any) {
+          // Tolerate up to 3 consecutive network errors before giving up
+          if (pollCount >= 3) {
+            clearInterval(interval);
+            reject(new Error(err.message || 'Network error while polling'));
+          }
         }
-      }, 3000);
+      }, POLL_INTERVAL);
     });
 
     const generatedQuestions = result?.questions || [];
@@ -215,21 +241,36 @@ const fetchQuestions = async () => {
         })
       });
 
-      if (!res.ok) throw new Error('Submission failed');
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || `Submission failed (${res.status})`);
+      }
       const data = await res.json();
 
       if (data.jobId) {
-        // Poll for evaluation completion
+        // Poll for evaluation completion with timeout
+        const EVAL_POLL_INTERVAL = 2500;
+        const EVAL_MAX_POLLS = 48; // 48 * 2.5s = 120s max wait
+
         const pollJobStatus = async (jobId: string, token: string): Promise<any> => {
           return new Promise((resolve, reject) => {
+            let pollCount = 0;
             const interval = setInterval(async () => {
+              pollCount++;
+              if (pollCount > EVAL_MAX_POLLS) {
+                clearInterval(interval);
+                reject(new Error('Evaluation timed out. Your answers are saved — check History later.'));
+                return;
+              }
               try {
                 const statusRes = await fetch(`${baseUrl}/queue/status/${jobId}`, {
                   headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!statusRes.ok) {
-                  clearInterval(interval);
-                  reject(new Error('Failed to get evaluation status'));
+                  if (pollCount >= 3) {
+                    clearInterval(interval);
+                    reject(new Error('Failed to get evaluation status'));
+                  }
                   return;
                 }
                 const statusData = await statusRes.json();
@@ -240,11 +281,13 @@ const fetchQuestions = async () => {
                   clearInterval(interval);
                   reject(new Error(statusData.failedReason || 'Evaluation failed in background'));
                 }
-              } catch (err) {
-                clearInterval(interval);
-                reject(err);
+              } catch (err: any) {
+                if (pollCount >= 3) {
+                  clearInterval(interval);
+                  reject(new Error(err.message || 'Network error during evaluation polling'));
+                }
               }
-            }, 2000);
+            }, EVAL_POLL_INTERVAL);
           });
         };
 

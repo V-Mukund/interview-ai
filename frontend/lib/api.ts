@@ -24,9 +24,10 @@ export const api: AxiosInstance = axios.create({
 });
 
 // Attach JWT from localStorage (client‑side only) to every request.
+// Checks both 'token' (used by login page) and 'accessToken' for compatibility.
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
     if (token) {
       config.headers = config.headers ?? {};
       config.headers["Authorization"] = `Bearer ${token}`;

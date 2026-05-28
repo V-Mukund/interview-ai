@@ -154,7 +154,13 @@ export default function ChatbotPage() {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => {
-      if (!res.ok) throw new Error('Unauthorized');
+      if (!res.ok) {
+        if (res.status === 401) {
+          localStorage.removeItem('token');
+          router.push('/');
+        }
+        throw new Error('Unauthorized');
+      }
       return res.json();
     })
     .then(data => {
@@ -494,16 +500,29 @@ export default function ChatbotPage() {
         const data = await res.json();
 
         if (data.jobId) {
+          const EVAL_POLL_INTERVAL = 2000;
+          const EVAL_MAX_POLLS = 60; // 60 * 2s = 120s max wait
+
           const pollJobStatus = async (jobId: string, token: string): Promise<any> => {
             return new Promise((resolve, reject) => {
+              let pollCount = 0;
               const interval = setInterval(async () => {
+                pollCount++;
+                if (pollCount > EVAL_MAX_POLLS) {
+                  clearInterval(interval);
+                  reject(new Error('Evaluation timed out. Your transcript has been saved.'));
+                  return;
+                }
                 try {
                   const statusRes = await fetch(`${baseUrl}/queue/status/${jobId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                   });
                   if (!statusRes.ok) {
-                    clearInterval(interval);
-                    reject(new Error('Failed to get evaluation status'));
+                    // Tolerate transient network errors
+                    if (pollCount >= 3) {
+                      clearInterval(interval);
+                      reject(new Error('Failed to get evaluation status'));
+                    }
                     return;
                   }
                   const statusData = await statusRes.json();
@@ -514,11 +533,13 @@ export default function ChatbotPage() {
                     clearInterval(interval);
                     reject(new Error(statusData.failedReason || 'Evaluation failed in background'));
                   }
-                } catch (err) {
-                  clearInterval(interval);
-                  reject(err);
+                } catch (err: any) {
+                  if (pollCount >= 3) {
+                    clearInterval(interval);
+                    reject(new Error(err.message || 'Network error during evaluation'));
+                  }
                 }
-              }, 2000);
+              }, EVAL_POLL_INTERVAL);
             });
           };
 
