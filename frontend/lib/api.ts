@@ -1,10 +1,6 @@
 // utils/api.ts – Axios instance for authentication, JWT, and regular data saving
 import axios, { AxiosInstance } from "axios";
-
-/**
- * Base URL for your backend API. Adjust via NEXT_PUBLIC_API_URL in .env.local.
- */
-const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+import { API_BASE_URL } from "./config";
 
 /**
  * Default timeout (ms) for quick/synchronous requests.
@@ -16,7 +12,7 @@ const timeout = Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 5000;
  * Axios instance used for login, token refresh, and other short‑lived requests.
  */
 export const api: AxiosInstance = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   timeout,
   headers: {
     "Content-Type": "application/json",

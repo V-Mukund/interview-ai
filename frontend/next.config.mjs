@@ -13,64 +13,11 @@ const withPWA = withPWAInit({
     document: "/_offline",
   },
   runtimeCaching: [
-    // ─── POLLING ENDPOINTS: NEVER CACHE ────────────────────────────
-    // Queue status polling must always go to network (stale data = broken UX)
-    {
-      urlPattern: /\/queue\/status\/.*/i,
-      handler: "NetworkOnly",
-      options: {
-        cacheName: "interview-ai-polling",
-      },
-    },
-    {
-      urlPattern: /\/queue\/jobs\/.*/i,
-      handler: "NetworkOnly",
-      options: {
-        cacheName: "interview-ai-jobs-polling",
-      },
-    },
-    // Async question generation — always network
-    {
-      urlPattern: /\/prep\/questions\/async/i,
-      handler: "NetworkOnly",
-      options: {
-        cacheName: "interview-ai-question-gen",
-      },
-    },
-    // Submission endpoint — always network
-    {
-      urlPattern: /\/prep\/submit/i,
-      handler: "NetworkOnly",
-      options: {
-        cacheName: "interview-ai-submit",
-      },
-    },
-
-    // ─── API DATA: NETWORK FIRST (cacheable for offline fallback) ──
-    // Backend API on Railway (production)
-    {
-      urlPattern: /^https:\/\/interview-ai-production-517f\.up\.railway\.app\/.*/i,
-      handler: "NetworkFirst",
-      options: {
-        cacheName: "interview-ai-api-cache",
-        networkTimeoutSeconds: 15,
-        expiration: {
-          maxEntries: 80,
-          maxAgeSeconds: 60 * 60, // 1 hour
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
-    },
-    // Local backend (development) — always NetworkOnly to bypass Workbox CORS interception
-    {
-      urlPattern: /^http:\/\/localhost:8000\/.*/i,
-      handler: "NetworkOnly",
-      options: {
-        cacheName: "interview-ai-local-api-bypass",
-      },
-    },
+    // ─── NO BACKEND API CACHING / INTERCEPTION ──────────────────────
+    // By NOT registering any handlers for backend routes (like /auth/, /prep/, /queue/),
+    // the service worker will completely ignore all backend API traffic (localhost:8000
+    // or Railway). Requests will bypass Workbox entirely and be handled natively by the browser.
+    // This permanently prevents any PWA-related CORS preflight or opaque-response fetch bugs.
 
     // ─── FRONTEND PAGES: STALE WHILE REVALIDATE ───────────────────
     // Production frontend on Railway

@@ -1,23 +1,20 @@
 // utils/ai-api.ts – Axios instance for AI and long‑running operations
 import axios, { AxiosInstance } from "axios";
+import { API_BASE_URL } from "./config";
 
 /**
- * Base URL for AI‑related endpoints. Adjust via NEXT_PUBLIC_AI_API_URL.
- */
-const baseURL = process.env.NEXT_PUBLIC_AI_API_URL ?? "/api/ai";
-
-/**
- * Timeout for long‑running AI requests (default 60 seconds).
+ * Timeout for long‑running AI requests (default 60 seconds).
  * Can be overridden with NEXT_PUBLIC_AI_API_TIMEOUT.
  */
 const rawTimeout = Number(process.env.NEXT_PUBLIC_AI_API_TIMEOUT) || 60000;
-export const timeout = Math.min(Math.max(rawTimeout, 30000), 120000); // 30‑120 s clamp
+export const timeout = Math.min(Math.max(rawTimeout, 30000), 120000); // 30‑120 s clamp
 
 /**
  * Axios instance dedicated to AI calls that may take longer.
+ * Uses the SAME backend base URL as api.ts — the AI endpoints live on the same server.
  */
 export const aiApi: AxiosInstance = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   timeout,
   headers: {
     "Content-Type": "application/json",
@@ -70,4 +67,3 @@ export async function performAiRequest<T>(
   }
   throw lastError;
 }
-
