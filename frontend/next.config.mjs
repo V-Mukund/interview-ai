@@ -63,20 +63,12 @@ const withPWA = withPWAInit({
         },
       },
     },
-    // Local backend (development)
+    // Local backend (development) — always NetworkOnly to bypass Workbox CORS interception
     {
       urlPattern: /^http:\/\/localhost:8000\/.*/i,
-      handler: "NetworkFirst",
+      handler: "NetworkOnly",
       options: {
-        cacheName: "interview-ai-local-api-cache",
-        networkTimeoutSeconds: 10,
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60,
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
+        cacheName: "interview-ai-local-api-bypass",
       },
     },
 
