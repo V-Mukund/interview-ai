@@ -46,9 +46,7 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from '../theme-provider';
 import PrepDashboard from '../../components/PrepDashboard';
 
-import { API_BASE_URL } from '../../lib/config';
-
-const baseUrl = API_BASE_URL;
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
 
 export default function ChatbotPage() {
   const [messages, setMessages] = useState<any[]>([]);

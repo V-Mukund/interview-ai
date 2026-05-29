@@ -50,9 +50,7 @@ function ScoreRing({ score, max = 100 }: { score: number; max?: number }) {
   );
 }
 
-import { API_BASE_URL } from '../../lib/config';
-
-const baseUrl = API_BASE_URL;
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
 
 function ResultContent() {
   const router = useRouter();
