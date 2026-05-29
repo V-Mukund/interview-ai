@@ -15,10 +15,7 @@ const withPWA = withPWAInit({
   },
 
   runtimeCaching: [
-    // Do not cache backend API requests.
-    // API calls like /auth, /prep, /queue, /profile should go directly to backend.
-
-    // Frontend navigation/pages
+   
     {
       urlPattern: ({ request }) => request.mode === "navigate",
       handler: "NetworkFirst",
