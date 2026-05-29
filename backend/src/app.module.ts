@@ -21,15 +21,16 @@ import { AppController } from './app.controller';
       isGlobal: true,
       envFilePath: '../.env',
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      url: process.env.DATABASE_URL,
-      autoLoadEntities: true,
-      synchronize: true,
-      ssl: {
-        rejectUnauthorized: false,
-      },
-    }),
+  TypeOrmModule.forRoot({
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  autoLoadEntities: true,
+  synchronize: true,
+  ssl:
+    process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
+}),
     AuthModule,
     UsersModule,
     ChatbotModule,
