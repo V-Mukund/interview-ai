@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Filter, BookOpen, Star, Clock, BrainCircuit, X, Play, Zap, FileText, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
+import { API_BASE_URL } from '../lib/config';
+
+const baseUrl = API_BASE_URL;
 
 export default function PrepDashboard() {
   const [materials, setMaterials] = useState<any[]>([]);

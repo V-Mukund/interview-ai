@@ -1,5 +1,6 @@
 // utils/api.ts – Axios instance for authentication, JWT, and regular data saving
 import axios, { AxiosInstance } from "axios";
+import { API_BASE_URL } from "./config";
 
 /**
  * Default timeout (ms) for quick/synchronous requests.
@@ -8,7 +9,7 @@ import axios, { AxiosInstance } from "axios";
 const timeout = Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 5000;
 
 export const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app',
+  baseURL: API_BASE_URL,
   timeout,
   headers: {
     "Content-Type": "application/json",

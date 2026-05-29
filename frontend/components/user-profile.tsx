@@ -1,7 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
+import { API_BASE_URL } from "../lib/config";
+
+const baseUrl = API_BASE_URL;
 
 export default function ProfilePage() {
   const userId = "123";

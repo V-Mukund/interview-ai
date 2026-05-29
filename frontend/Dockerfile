@@ -1,6 +1,11 @@
 # Build stage
 FROM node:18-alpine AS builder
 WORKDIR /app
+
+# Accept Railway env var as a build arg so Next.js can bake it in
+ARG NEXT_PUBLIC_API_URL=https://interview-ai-production-517f.up.railway.app
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 COPY package*.json ./
 RUN npm install
 COPY . .

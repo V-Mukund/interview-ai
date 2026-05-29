@@ -13,7 +13,9 @@ interface Question {
   type: string;
 }
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app';
+import { API_BASE_URL } from '../../lib/config';
+
+const baseUrl = API_BASE_URL;
 export default function TestPage() {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -316,7 +318,7 @@ const fetchQuestions = async () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen t-bg-base t-text-pri flex flex-col items-center justify-center font-sans">
+      <div className="min-h-screen t-bg-base t-text-pri flex flex -col items-center justify-center font-sans">
         <div className="text-center space-y-4">
           <Loader2 size={40} className="animate-spin text-purple-500 mx-auto" />
           <h2 className="text-lg font-black tracking-tight">Generating Custom AI Assessment...</h2>

@@ -1,5 +1,6 @@
 // utils/ai-api.ts – Axios instance for AI and long‑running operations
 import axios, { AxiosInstance } from "axios";
+import { API_BASE_URL } from "./config";
 
 /**
  * Timeout for long‑running AI requests (default 60 seconds).
@@ -9,7 +10,7 @@ const rawTimeout = Number(process.env.NEXT_PUBLIC_AI_API_TIMEOUT) || 60000;
 export const timeout = Math.min(Math.max(rawTimeout, 30000), 120000); // 30‑120 s clamp
 
 export const aiApi: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://interview-ai-production-517f.up.railway.app',
+  baseURL: API_BASE_URL,
   timeout,
   headers: {
     "Content-Type": "application/json",
