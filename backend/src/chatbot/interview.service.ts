@@ -184,11 +184,8 @@ Rules:
 - If the candidate's answer is empty or irrelevant, give a low score.
 - Feedback must be specific to the candidate's actual answer.
 - Keep the tone professional and helpful.
-- Score each answer out of 10.
-- Calculate the overall score out of 100.
-- Determine hiring readiness: Beginner / Improving / Job Ready / Strong Candidate
-
-Return only valid JSON in this exact format, nothing else:
+- Score each answer from 0–100 based on correctness, relevance, key points, clarity, and communication.
+- Return ONLY valid JSON in this exact format, nothing else:
 
 {
   "overallScore": 0,
@@ -211,7 +208,7 @@ Return only valid JSON in this exact format, nothing else:
     }
   ],
   "finalRecommendation": "",
-  "hiringReadiness": "Beginner"
+  "hiringReadiness": "IMPROVE BASICS"
 }
 `;
 
@@ -220,12 +217,36 @@ Return only valid JSON in this exact format, nothing else:
         model: 'llama-3.3-70b-versatile',
         response_format: { type: 'json_object' }
       });
-      const text = chatCompletion.choices[0]?.message?.content?.replace(/```json|```/g, '').trim() || "{}";
+      const textRaw = chatCompletion.choices[0]?.message?.content?.replace(/```json|```/g, '').trim() || "{}";
 
       // Validate JSON
-      const parsed = JSON.parse(text);
+      const parsed = JSON.parse(textRaw);
 
-      // Save to DB — overallScore is now out of 100 directly
+      // Programmatically calculate accuracy = average of all answer scores
+      const feedbacks = parsed.questionWiseFeedback || [];
+      let calculatedAccuracy = 0;
+      if (feedbacks.length > 0) {
+        const totalScore = feedbacks.reduce((acc: number, curr: any) => acc + (Number(curr.score) || 0), 0);
+        calculatedAccuracy = Math.round(totalScore / feedbacks.length);
+      }
+
+      parsed.overallScore = calculatedAccuracy;
+
+      // Dynamic hiring readiness badge logic: 80–100 = JOB READY, 60–79 = NEEDS PRACTICE, below 60 = IMPROVE BASICS
+      if (calculatedAccuracy >= 80) {
+        parsed.hiringReadiness = "JOB READY";
+        parsed.skillLevel = "Job Ready";
+      } else if (calculatedAccuracy >= 60) {
+        parsed.hiringReadiness = "NEEDS PRACTICE";
+        parsed.skillLevel = "Improving";
+      } else {
+        parsed.hiringReadiness = "IMPROVE BASICS";
+        parsed.skillLevel = "Beginner";
+      }
+
+      const text = JSON.stringify(parsed);
+
+      // Save to DB
       const savedResult = await this.mockResultRepository.save({
         user: { id: userId },
         company: data.company,
@@ -233,8 +254,8 @@ Return only valid JSON in this exact format, nothing else:
         questions: data.answers.map(a => a.question),
         answers: data.answers.map(a => a.userAnswer),
         evaluation: text,
-        score: Math.round(parsed.overallScore), // already out of 100
-        accuracy: Math.round(parsed.overallScore), // out of 100
+        score: calculatedAccuracy,
+        accuracy: calculatedAccuracy,
         status: 'completed',
         timestamp: new Date()
       });
@@ -309,7 +330,7 @@ Return only valid JSON in this exact format, nothing else:
         date: result.timestamp.toISOString().split('T')[0],
         overallScore: result.score,
         finalRecommendation: result.evaluation,
-        hiringReadiness: result.score >= 80 ? 'Strong Candidate' : result.score >= 65 ? 'Job Ready' : 'Improving'
+        hiringReadiness: result.score >= 80 ? 'JOB READY' : result.score >= 60 ? 'NEEDS PRACTICE' : 'IMPROVE BASICS'
       };
     }
 

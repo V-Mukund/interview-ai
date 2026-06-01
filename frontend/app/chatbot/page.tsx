@@ -682,8 +682,8 @@ export default function ChatbotPage() {
       total: history.length,
       avgScore: `${avgVal} / 50`,
       avgPct,
-      readiness: avgPct >= 80 ? "Strong Candidate" : avgPct >= 65 ? "Job Ready" : avgPct >= 50 ? "Improving" : "Beginner",
-      readinessColor: avgPct >= 80 ? "text-green-500 bg-green-500/10 border-green-500/20" : avgPct >= 65 ? "text-blue-500 bg-blue-500/10 border-blue-500/20" : avgPct >= 50 ? "text-amber-500 bg-amber-500/10 border-amber-500/20" : "text-red-500 bg-red-500/10 border-red-500/20"
+      readiness: avgPct >= 80 ? "JOB READY" : avgPct >= 60 ? "NEEDS PRACTICE" : "IMPROVE BASICS",
+      readinessColor: avgPct >= 80 ? "text-green-500 bg-green-500/10 border-green-500/20" : avgPct >= 60 ? "text-amber-500 bg-amber-500/10 border-amber-500/20" : "text-red-500 bg-red-500/10 border-red-500/20"
     };
   };
 
@@ -1229,7 +1229,7 @@ export default function ChatbotPage() {
 
                                 <td className="py-4 text-center">
                                   <span className="text-sm font-bold text-neutral-850 dark:text-neutral-250">
-                                    {item.score}%
+                                    {item.accuracy}%
                                   </span>
                                 </td>
 

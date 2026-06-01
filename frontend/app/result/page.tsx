@@ -9,12 +9,16 @@ import {
 
 function HiringBadge({ level }: { level: string }) {
   const map: Record<string, { color: string; bg: string; border: string }> = {
+    'JOB READY':        { color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/20' },
+    'NEEDS PRACTICE':   { color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20' },
+    'IMPROVE BASICS':   { color: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/20' },
+    // Fallback support for older DB records
     'Beginner':         { color: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/20' },
     'Improving':        { color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20' },
-    'Job Ready':        { color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/20' },
+    'Job Ready':        { color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/20' },
     'Strong Candidate': { color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/20' },
   };
-  const style = map[level] || map['Beginner'];
+  const style = map[level] || map['IMPROVE BASICS'];
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${style.color} ${style.bg} ${style.border}`}>
       <Award size={10} /> {level}
@@ -24,7 +28,7 @@ function HiringBadge({ level }: { level: string }) {
 
 function ScoreRing({ score, max = 100 }: { score: number; max?: number }) {
   const pct = Math.min((score / max) * 100, 100);
-  const color = pct >= 75 ? '#a855f7' : pct >= 50 ? '#f59e0b' : '#ef4444';
+  const color = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
   return (
     <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
       <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -346,7 +350,7 @@ function ResultContent() {
                   Question {selectedIdx + 1}
                 </span>
                 <span className="text-[10px] text-green-400 font-bold bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/15">
-                  AI Score: {selectedQuestion.score} / 10
+                  AI Score: {selectedQuestion.score} / 100
                 </span>
               </div>
               <h2 className="text-md font-black text-white italic leading-snug">

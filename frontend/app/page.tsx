@@ -22,10 +22,52 @@ export default function LoginPage() {
     setUsername('');
   };
 
+  const hashPassword = async (pwd: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pwd);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  const handleOfflineLogin = async () => {
+    const normalizedEmail = email.toLowerCase().trim();
+    const offlineUsersStr = localStorage.getItem('offline_users');
+    const offlineUsers = offlineUsersStr ? JSON.parse(offlineUsersStr) : {};
+    const storedUser = offlineUsers[normalizedEmail];
+
+    if (storedUser) {
+      const computedHash = await hashPassword(password);
+      if (computedHash === storedUser.passwordHash) {
+        localStorage.setItem('token', storedUser.token);
+        localStorage.setItem('user', JSON.stringify({ email: storedUser.email, username: storedUser.username }));
+        window.location.href = '/chatbot?offline=true';
+      } else {
+        setError('Invalid email or password (Offline Mode).');
+      }
+    } else {
+      setError('Offline login is not available on this device. You must log in online at least once first.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+
+    const isDeviceOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+    if (isDeviceOffline) {
+      if (isRegister) {
+        setError('Internet connection is required to create a new account.');
+        setIsLoading(false);
+        return;
+      } else {
+        await handleOfflineLogin();
+        setIsLoading(false);
+        return;
+      }
+    }
+
     const endpoint = isRegister ? '/auth/register' : '/auth/login';
     try {
       const payload = isRegister ? { email, username, password } : { email, password };
@@ -35,17 +77,43 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
       if (response.ok) {
         const data = await response.json();
         if (data.access_token) {
           localStorage.setItem('token', data.access_token);
+          
+          // Securely pre-cache profile for offline usage
+          try {
+            const profileRes = await fetch(`${baseUrl}/auth/profile`, {
+              headers: { 'Authorization': `Bearer ${data.access_token}` }
+            });
+            if (profileRes.ok) {
+              const profileData = await profileRes.json();
+              const normalizedEmail = email.toLowerCase().trim();
+              const computedHash = await hashPassword(password);
+              
+              const offlineUsersStr = localStorage.getItem('offline_users') || '{}';
+              const offlineUsers = JSON.parse(offlineUsersStr);
+              offlineUsers[normalizedEmail] = {
+                email: normalizedEmail,
+                username: profileData.username,
+                passwordHash: computedHash,
+                token: data.access_token
+              };
+              localStorage.setItem('offline_users', JSON.stringify(offlineUsers));
+              localStorage.setItem('user', JSON.stringify({ email: normalizedEmail, username: profileData.username }));
+            }
+          } catch (profileErr) {
+            console.error('Failed to pre-cache offline credentials profile:', profileErr);
+          }
+
           window.location.href = '/chatbot';
         } else {
           setError('Authentication succeeded but no token was received.');
         }
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Server error' }));
-
         setError(
           Array.isArray(errorData.message)
             ? errorData.message.join(', ')
@@ -53,7 +121,11 @@ export default function LoginPage() {
         );
       }
     } catch (err) {
-      setError('Connection failed. Make sure the backend is running.');
+      if (!isRegister) {
+        await handleOfflineLogin();
+      } else {
+        setError('Connection failed. Make sure the backend is running.');
+      }
     } finally {
       setIsLoading(false);
     }
