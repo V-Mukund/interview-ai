@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Filter, BookOpen, Star, Clock, BrainCircuit, X, Play, Zap, FileText, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 
 import { API_BASE_URL } from '../lib/config';
-import { getAuthValue } from '../lib/auth-store';
+import { getAuthValue, setAuthValue } from '../lib/auth-store';
 
 const baseUrl = API_BASE_URL;
 
@@ -23,6 +23,7 @@ export default function PrepDashboard() {
   
   const [selectedMaterial, setSelectedMaterial] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [dbVersion, setDbVersion] = useState<string | null>(null);
   
   // AI States
   const [aiLoading, setAiLoading] = useState(false);
@@ -55,28 +56,31 @@ export default function PrepDashboard() {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
 
-    // Load from LocalStorage Cache first (Instant render!)
+    // Load from IndexedDB Cache first (Instant render!)
     try {
-      const cachedMats = localStorage.getItem('prep_materials');
-      const cachedProg = localStorage.getItem('prep_progress');
-      const cachedBook = localStorage.getItem('prep_bookmarks');
-      const cachedRec = localStorage.getItem('prep_recently_viewed');
+      const [cachedMats, cachedProg, cachedBook, cachedRec, cachedVer] = await Promise.all([
+        getAuthValue('prep_materials'),
+        getAuthValue('prep_progress'),
+        getAuthValue('prep_bookmarks'),
+        getAuthValue('prep_recently_viewed'),
+        getAuthValue('prep_materials_version')
+      ]);
 
       if (cachedMats) {
-        const parsed = JSON.parse(cachedMats);
-        setMaterials(parsed);
-        setFilteredMaterials(parsed);
+        setMaterials(cachedMats);
+        setFilteredMaterials(cachedMats);
       }
-      if (cachedProg) setProgress(JSON.parse(cachedProg));
-      if (cachedBook) setBookmarks(JSON.parse(cachedBook));
-      if (cachedRec) setRecentlyViewed(JSON.parse(cachedRec));
+      if (cachedProg) setProgress(cachedProg);
+      if (cachedBook) setBookmarks(cachedBook);
+      if (cachedRec) setRecentlyViewed(cachedRec);
+      if (cachedVer) setDbVersion(cachedVer);
       
       // If we had cache, bypass show full-page loading spinner to avoid flashes
       if (cachedMats) {
         setIsLoading(false);
       }
     } catch (e) {
-      console.warn('LocalStorage read failed:', e);
+      console.warn('IndexedDB read failed:', e);
     }
 
     const token = await getAuthValue('token');
@@ -98,22 +102,38 @@ export default function PrepDashboard() {
         const data = await matRes.json();
         setMaterials(data);
         setFilteredMaterials(data);
-        localStorage.setItem('prep_materials', JSON.stringify(data));
+
+        // Versioning check based on content hash
+        const dataString = JSON.stringify(data);
+        const encoder = new TextEncoder();
+        const dataBuffer = encoder.encode(dataString);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const newHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        const cachedHash = await getAuthValue('prep_materials_hash');
+        if (newHash !== cachedHash) {
+          const version = new Date().toISOString();
+          await setAuthValue('prep_materials_version', version);
+          await setAuthValue('prep_materials_hash', newHash);
+          await setAuthValue('prep_materials', data);
+          setDbVersion(version);
+        }
       }
       if (progRes.ok) {
         const progData = await progRes.json();
         setProgress(progData);
-        localStorage.setItem('prep_progress', JSON.stringify(progData));
+        await setAuthValue('prep_progress', progData);
       }
       if (bookRes.ok) {
         const bookData = await bookRes.json();
         setBookmarks(bookData);
-        localStorage.setItem('prep_bookmarks', JSON.stringify(bookData));
+        await setAuthValue('prep_bookmarks', bookData);
       }
       if (recRes.ok) {
         const recData = await recRes.json();
         setRecentlyViewed(recData);
-        localStorage.setItem('prep_recently_viewed', JSON.stringify(recData));
+        await setAuthValue('prep_recently_viewed', recData);
       }
     } catch (err) {
       console.error('Failed to fetch prep data:', err);
@@ -331,7 +351,14 @@ export default function PrepDashboard() {
       {/* Header & Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 shrink-0 mt-4 px-4 sm:px-6 lg:px-8">
         <div className="flex-1">
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight"><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Learning Center</span></h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight"><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Learning Center</span></h2>
+            {dbVersion && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                v-{dbVersion.split('T')[0].replace(/-/g, '')}
+              </span>
+            )}
+          </div>
           <p className="text-neutral-400 text-sm mt-1 font-medium">Master concepts, take notes, and track your prep journey.</p>
         </div>
       </div>

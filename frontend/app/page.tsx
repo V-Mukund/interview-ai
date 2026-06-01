@@ -83,28 +83,54 @@ export default function LoginPage() {
         if (data.access_token) {
           await setAuthValue('token', data.access_token);
           
-          // Securely pre-cache profile for offline usage in IndexedDB
+          // Securely pre-cache profile & versioned question banks for offline usage in IndexedDB
           try {
-            const profileRes = await fetch(`${baseUrl}/auth/profile`, {
-              headers: { 'Authorization': `Bearer ${data.access_token}` }
-            });
+            const [profileRes, materialsRes] = await Promise.all([
+              fetch(`${baseUrl}/auth/profile`, {
+                headers: { 'Authorization': `Bearer ${data.access_token}` }
+              }),
+              fetch(`${baseUrl}/prep/materials`, {
+                headers: { 'Authorization': `Bearer ${data.access_token}` }
+              })
+            ]);
+
             if (profileRes.ok) {
-              const profileData = await profileRes.json();
-              const normalizedEmail = email.toLowerCase().trim();
-              const computedHash = await hashPassword(password);
-              
-              const offlineUsers = await getAuthValue('offline_users') || {};
-              offlineUsers[normalizedEmail] = {
-                email: normalizedEmail,
-                username: profileData.username,
-                passwordHash: computedHash,
-                token: data.access_token
-              };
-              await setAuthValue('offline_users', offlineUsers);
-              await setAuthValue('user', { email: normalizedEmail, username: profileData.username });
+              const profileData = await profileRes.ok ? await profileRes.json() : null;
+              if (profileData) {
+                const normalizedEmail = email.toLowerCase().trim();
+                const computedHash = await hashPassword(password);
+                
+                const offlineUsers = await getAuthValue('offline_users') || {};
+                offlineUsers[normalizedEmail] = {
+                  email: normalizedEmail,
+                  username: profileData.username,
+                  passwordHash: computedHash,
+                  token: data.access_token
+                };
+                await setAuthValue('offline_users', offlineUsers);
+                await setAuthValue('user', { email: normalizedEmail, username: profileData.username });
+              }
             }
-          } catch (profileErr) {
-            console.error('Failed to pre-cache offline credentials profile:', profileErr);
+
+            if (materialsRes.ok) {
+              const materialsData = await materialsRes.json();
+              const dataString = JSON.stringify(materialsData);
+              const encoder = new TextEncoder();
+              const dataBuffer = encoder.encode(dataString);
+              const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+              const hashArray = Array.from(new Uint8Array(hashBuffer));
+              const newHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+              const cachedHash = await getAuthValue('prep_materials_hash');
+              if (newHash !== cachedHash) {
+                const version = new Date().toISOString();
+                await setAuthValue('prep_materials_version', version);
+                await setAuthValue('prep_materials_hash', newHash);
+                await setAuthValue('prep_materials', materialsData);
+              }
+            }
+          } catch (preCacheErr) {
+            console.error('Failed to pre-cache offline credentials or question banks:', preCacheErr);
           }
 
           window.location.href = '/chatbot';

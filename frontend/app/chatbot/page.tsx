@@ -47,7 +47,7 @@ import { useTheme } from '../theme-provider';
 import PrepDashboard from '../../components/PrepDashboard';
 
 import { API_BASE_URL } from '../../lib/config';
-import { getAuthValue, removeAuthValue } from '../../lib/auth-store';
+import { getAuthValue, setAuthValue, removeAuthValue } from '../../lib/auth-store';
 
 const baseUrl = API_BASE_URL;
 
@@ -153,25 +153,43 @@ export default function ChatbotPage() {
         return;
       }
 
-      // Fetch user profile
-      try {
-        const res = await fetch(`${baseUrl}/auth/profile`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
-          if (res.status === 401) {
-            await removeAuthValue('token');
-            router.push('/');
+      const isDeviceOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+      if (isDeviceOffline) {
+        // Offline: load cached profile from IndexedDB
+        const cachedUser = await getAuthValue('user');
+        if (cachedUser) {
+          setUser(cachedUser);
+          setEditData(cachedUser);
+        }
+      } else {
+        // Online: fetch profile from backend and cache it
+        try {
+          const res = await fetch(`${baseUrl}/auth/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (!res.ok) {
+            if (res.status === 401) {
+              await removeAuthValue('token');
+              router.push('/');
+            }
+            throw new Error('Unauthorized');
           }
-          throw new Error('Unauthorized');
+          const data = await res.json();
+          if (data) {
+            setUser(data);
+            setEditData(data);
+            await setAuthValue('user', data);
+          }
+        } catch (err) {
+          console.error('Profile fetch failed:', err);
+          // Fallback to cached profile on network error
+          const cachedUser = await getAuthValue('user');
+          if (cachedUser) {
+            setUser(cachedUser);
+            setEditData(cachedUser);
+          }
         }
-        const data = await res.json();
-        if (data) {
-          setUser(data);
-          setEditData(data);
-        }
-      } catch (err) {
-        console.error('Profile fetch failed:', err);
       }
 
       // Fetch History
@@ -195,13 +213,38 @@ export default function ChatbotPage() {
     }
   }, []);
 
-  // NETWORK CONNECTIVITY DETECTOR
+  // NETWORK CONNECTIVITY DETECTOR & RECONNECT SYNC
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsOnline(navigator.onLine);
       
-      const handleOnline = () => setIsOnline(true);
-      const handleOffline = () => setIsOnline(false);
+      const handleOnline = async () => {
+        setIsOnline(true);
+        // Auto-sync profile and data when reconnecting
+        try {
+          const token = await getAuthValue('token');
+          if (token) {
+            const res = await fetch(`${baseUrl}/auth/profile`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              setUser(data);
+              setEditData(data);
+              await setAuthValue('user', data);
+            }
+            fetchHistory();
+            fetchCompletedInterviews();
+            fetchDashboardStats();
+          }
+        } catch (err) {
+          console.error('Reconnect sync failed:', err);
+        }
+      };
+      const handleOffline = () => {
+        setIsOnline(false);
+        setIsEditing(false);
+      };
       
       window.addEventListener('online', handleOnline);
       window.addEventListener('offline', handleOffline);
@@ -579,7 +622,7 @@ export default function ChatbotPage() {
 
     setIsSaving(true);
     setStatusMsg(null);
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     try {
       const res = await fetch(`${baseUrl}/auth/profile`, {
         method: 'PATCH',
@@ -598,6 +641,7 @@ export default function ChatbotPage() {
       if (res.ok) {
         const updated = await res.json();
         setUser(updated);
+        await setAuthValue('user', updated);
         setIsEditing(false);
         setStatusMsg({ type: 'success', text: 'Profile updated successfully!' });
         setTimeout(() => setStatusMsg(null), 3000);
@@ -994,6 +1038,13 @@ export default function ChatbotPage() {
                 <p className="text-neutral-500 uppercase tracking-widest text-sm font-black">{user?.email}</p>
               </div>
 
+              {!isOnline && (
+                <div className="mb-6 p-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-500 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <AlertTriangle size={18} className="shrink-0" />
+                  <p className="text-sm font-bold">Offline Mode — Profile editing is disabled until you reconnect.</p>
+                </div>
+              )}
+
               {statusMsg && (
                 <div className={`mb-6 p-4 rounded-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${statusMsg.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
                   {statusMsg.type === 'success' ? <Check size={18} /> : <X size={18} />}
@@ -1005,9 +1056,10 @@ export default function ChatbotPage() {
                 {!isEditing && (
                   <button 
                     onClick={() => { setIsEditing(true); setEditData(user); }}
-                    className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-black uppercase tracking-widest hover:bg-white/10 transition-all text-neutral-400 hover:text-white"
+                    disabled={!isOnline}
+                    className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-black uppercase tracking-widest hover:bg-white/10 transition-all text-neutral-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/5"
                   >
-                    <Edit3 size={14} /> Edit Profile
+                    <Edit3 size={14} /> {isOnline ? 'Edit Profile' : 'Edit Disabled'}
                   </button>
                 )}
 
