@@ -34,7 +34,8 @@ export default function TestPage() {
   useEffect(() => {
     const checkAuth = async () => {
       const token = await getAuthValue('token');
-      if (!token) {
+      const offline = !navigator.onLine;
+      if (!token && !offline) {
         router.push('/');
       }
     };
@@ -72,7 +73,7 @@ const fetchQuestions = async () => {
   const offline = !navigator.onLine;
   setIsOffline(offline);
 
-  if (!token) {
+  if (!token && !offline) {
     setErrorMsg('Session expired. Please log in again.');
     setIsLoading(false);
     router.push('/');

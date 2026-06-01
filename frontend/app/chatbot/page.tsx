@@ -382,7 +382,7 @@ export default function ChatbotPage() {
       
     if (!confirm(message)) return;
 
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     try {
       const res = await fetch(`${baseUrl}/api/interview/history`, {
         method: 'DELETE',
@@ -415,7 +415,7 @@ export default function ChatbotPage() {
   const handleClearHistory = async () => {
     if (!confirm('Are you sure you want to clear your entire conversation history?')) return;
     
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     try {
       const res = await fetch(`${baseUrl}/chatbot/clear`, {
         method: 'DELETE',
@@ -447,7 +447,7 @@ export default function ChatbotPage() {
     if (selectedChats.length === 0) return;
     if (!confirm(`Are you sure you want to delete ${selectedChats.length} selected conversations?`)) return;
 
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     try {
       const res = await fetch(`${baseUrl}/chatbot/delete-multiple`, {
         method: 'POST',
@@ -532,7 +532,7 @@ export default function ChatbotPage() {
     } else {
       setIsLoading(true);
       setMockState('evaluating');
-      const token = localStorage.getItem('token');
+      const token = await getAuthValue('token');
       try {
         const res = await fetch(`${baseUrl}/prep/submit`, {
           method: 'POST',
@@ -676,7 +676,7 @@ export default function ChatbotPage() {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = await getAuthValue('token');
       const response = await fetch(`${baseUrl}/chatbot/message`, {
         method: 'POST',
         headers: { 
