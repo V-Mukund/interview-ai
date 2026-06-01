@@ -75,7 +75,8 @@ function ResultContent() {
       const fetchReport = async () => {
         setIsLoading(true);
         setErrorMsg(null);
-        const token = localStorage.getItem('token');
+        const { getAuthValue } = await import('../../lib/auth-store');
+        const token = await getAuthValue('token');
         try {
           const res = await fetch(`${baseUrl}/api/interviews/${id}/performance`, {
             headers: { 'Authorization': `Bearer ${token}` }

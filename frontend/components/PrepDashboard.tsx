@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Filter, BookOpen, Star, Clock, BrainCircuit, X, Play, Zap, FileText, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 
 import { API_BASE_URL } from '../lib/config';
+import { getAuthValue } from '../lib/auth-store';
 
 const baseUrl = API_BASE_URL;
 
@@ -78,7 +79,7 @@ export default function PrepDashboard() {
       console.warn('LocalStorage read failed:', e);
     }
 
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     if (!token) {
       isFetchingRef.current = false;
       return;
@@ -143,7 +144,7 @@ export default function PrepDashboard() {
 
   const handleToggleBookmark = async (e: React.MouseEvent, materialId: number) => {
     e.stopPropagation();
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     try {
       const res = await fetch(`${baseUrl}/prep/bookmarks/${materialId}`, {
         method: 'POST',
@@ -161,7 +162,7 @@ export default function PrepDashboard() {
   };
 
   const handleMarkComplete = async (materialId: number) => {
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     try {
       const res = await fetch(`${baseUrl}/prep/progress/${materialId}`, {
         method: 'POST',
@@ -185,7 +186,7 @@ export default function PrepDashboard() {
     setCurrentQuestionIndex(0);
     setShowAnswer(false);
     
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     try {
       await fetch(`${baseUrl}/prep/recently-viewed/${mat.id}`, {
         method: 'POST',
@@ -228,7 +229,7 @@ export default function PrepDashboard() {
     if (!selectedMaterial) return;
     setAiLoading(true);
     setAiContent(null);
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     try {
       const endpoint = action === 'explain' ? '/prep/ai/explain' : '/prep/ai/cheat-sheet';
       const body = action === 'explain' 
@@ -265,7 +266,7 @@ export default function PrepDashboard() {
   const handleGenerateQuestions = async () => {
     if (!selectedMaterial) return;
     setGeneratingQuestions(true);
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     if (!token) {
       showToast('Session expired. Please log in again.', 'error');
       setGeneratingQuestions(false);

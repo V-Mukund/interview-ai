@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { getAuthValue, setAuthValue } from '../lib/auth-store';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -32,16 +33,15 @@ export default function LoginPage() {
 
   const handleOfflineLogin = async () => {
     const normalizedEmail = email.toLowerCase().trim();
-    const offlineUsersStr = localStorage.getItem('offline_users');
-    const offlineUsers = offlineUsersStr ? JSON.parse(offlineUsersStr) : {};
+    const offlineUsers = await getAuthValue('offline_users') || {};
     const storedUser = offlineUsers[normalizedEmail];
 
     if (storedUser) {
       const computedHash = await hashPassword(password);
       if (computedHash === storedUser.passwordHash) {
-        localStorage.setItem('token', storedUser.token);
-        localStorage.setItem('user', JSON.stringify({ email: storedUser.email, username: storedUser.username }));
-        window.location.href = '/chatbot?offline=true';
+        await setAuthValue('token', storedUser.token);
+        await setAuthValue('user', { email: storedUser.email, username: storedUser.username });
+        window.location.href = '/chatbot';
       } else {
         setError('Invalid email or password (Offline Mode).');
       }
@@ -81,9 +81,9 @@ export default function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.access_token) {
-          localStorage.setItem('token', data.access_token);
+          await setAuthValue('token', data.access_token);
           
-          // Securely pre-cache profile for offline usage
+          // Securely pre-cache profile for offline usage in IndexedDB
           try {
             const profileRes = await fetch(`${baseUrl}/auth/profile`, {
               headers: { 'Authorization': `Bearer ${data.access_token}` }
@@ -93,16 +93,15 @@ export default function LoginPage() {
               const normalizedEmail = email.toLowerCase().trim();
               const computedHash = await hashPassword(password);
               
-              const offlineUsersStr = localStorage.getItem('offline_users') || '{}';
-              const offlineUsers = JSON.parse(offlineUsersStr);
+              const offlineUsers = await getAuthValue('offline_users') || {};
               offlineUsers[normalizedEmail] = {
                 email: normalizedEmail,
                 username: profileData.username,
                 passwordHash: computedHash,
                 token: data.access_token
               };
-              localStorage.setItem('offline_users', JSON.stringify(offlineUsers));
-              localStorage.setItem('user', JSON.stringify({ email: normalizedEmail, username: profileData.username }));
+              await setAuthValue('offline_users', offlineUsers);
+              await setAuthValue('user', { email: normalizedEmail, username: profileData.username });
             }
           } catch (profileErr) {
             console.error('Failed to pre-cache offline credentials profile:', profileErr);

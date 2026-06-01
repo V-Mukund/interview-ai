@@ -47,6 +47,7 @@ import { useTheme } from '../theme-provider';
 import PrepDashboard from '../../components/PrepDashboard';
 
 import { API_BASE_URL } from '../../lib/config';
+import { getAuthValue, removeAuthValue } from '../../lib/auth-store';
 
 const baseUrl = API_BASE_URL;
 
@@ -145,38 +146,41 @@ export default function ChatbotPage() {
 
   useEffect(() => {
     setMounted(true);
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/');
-      return;
-    }
+    const initAuth = async () => {
+      const token = await getAuthValue('token');
+      if (!token) {
+        router.push('/');
+        return;
+      }
 
-    // Fetch user profile
-    fetch(`${baseUrl}/auth/profile`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => {
-      if (!res.ok) {
-        if (res.status === 401) {
-          localStorage.removeItem('token');
-          router.push('/');
+      // Fetch user profile
+      try {
+        const res = await fetch(`${baseUrl}/auth/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          if (res.status === 401) {
+            await removeAuthValue('token');
+            router.push('/');
+          }
+          throw new Error('Unauthorized');
         }
-        throw new Error('Unauthorized');
+        const data = await res.json();
+        if (data) {
+          setUser(data);
+          setEditData(data);
+        }
+      } catch (err) {
+        console.error('Profile fetch failed:', err);
       }
-      return res.json();
-    })
-    .then(data => {
-      if (data) {
-        setUser(data);
-        setEditData(data);
-      }
-    })
-    .catch((err) => console.error('Profile fetch failed:', err));
 
-    // Fetch History
-    fetchHistory();
-    fetchCompletedInterviews();
-    fetchDashboardStats();
+      // Fetch History
+      fetchHistory();
+      fetchCompletedInterviews();
+      fetchDashboardStats();
+    };
+
+    initAuth();
 
     // Route to correct initial view tab
     if (typeof window !== 'undefined') {
@@ -227,7 +231,7 @@ export default function ChatbotPage() {
       console.warn('LocalStorage read failed:', e);
     }
 
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     if (!token) return;
 
     try {
@@ -259,7 +263,7 @@ export default function ChatbotPage() {
       console.warn('LocalStorage read failed:', e);
     }
 
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     if (!token) return;
 
     try {
@@ -295,7 +299,7 @@ export default function ChatbotPage() {
       console.warn('LocalStorage read failed:', e);
     }
 
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     if (!token) return;
 
     try {
@@ -687,7 +691,9 @@ export default function ChatbotPage() {
     };
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await removeAuthValue("token");
+    await removeAuthValue("user");
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("authToken");

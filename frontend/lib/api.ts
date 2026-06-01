@@ -16,11 +16,11 @@ export const api: AxiosInstance = axios.create({
   },
 });
 
-// Attach JWT from localStorage (client‑side only) to every request.
-// Checks both 'token' (used by login page) and 'accessToken' for compatibility.
-api.interceptors.request.use((config) => {
+// Attach JWT from IndexedDB (client‑side only) to every request.
+api.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+    const { getAuthValue } = await import("./auth-store");
+    const token = await getAuthValue("token");
     if (token) {
       config.headers = config.headers ?? {};
       config.headers["Authorization"] = `Bearer ${token}`;

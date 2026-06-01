@@ -14,6 +14,7 @@ interface Question {
 }
 
 import { API_BASE_URL } from '../../lib/config';
+import { getAuthValue, removeAuthValue } from '../../lib/auth-store';
 
 const baseUrl = API_BASE_URL;
 export default function TestPage() {
@@ -30,12 +31,13 @@ export default function TestPage() {
   const [targetDifficulty, setTargetDifficulty] = useState('Intermediate');
 
   useEffect(() => {
-    // Auth check — redirect to login if no token
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/');
-      return;
-    }
+    const checkAuth = async () => {
+      const token = await getAuthValue('token');
+      if (!token) {
+        router.push('/');
+      }
+    };
+    checkAuth();
 
     const role = localStorage.getItem('target_role') || 'Software Developer';
     const company = localStorage.getItem('target_company') || 'Standard';
@@ -65,7 +67,7 @@ export default function TestPage() {
 const fetchQuestions = async () => {
   setIsLoading(true);
   setErrorMsg(null);
-  const token = localStorage.getItem('token');
+  const token = await getAuthValue('token');
 
   if (!token) {
     setErrorMsg('Session expired. Please log in again.');
@@ -90,7 +92,7 @@ const fetchQuestions = async () => {
 
     if (!res.ok) {
       if (res.status === 401) {
-        localStorage.removeItem('token');
+        await removeAuthValue('token');
         setErrorMsg('Session unauthorized or expired. Redirecting to login page...');
         setTimeout(() => {
           router.push('/');
@@ -220,7 +222,7 @@ const fetchQuestions = async () => {
   const handleSubmitAll = async () => {
     if (!isSubmitEnabled) return;
     setIsSubmitting(true);
-    const token = localStorage.getItem('token');
+    const token = await getAuthValue('token');
     
     // Map answers into backend expected schema
     const formattedAnswers = questions.map(q => ({
