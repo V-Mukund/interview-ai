@@ -28,37 +28,168 @@ export class InterviewService {
    */
   private getFallbackQuestions(role: string, company: string): string[] {
     const roleKey = role.toLowerCase();
+    const companyTitle = company ? company.trim() : 'Standard';
+
     const banks: Record<string, string[]> = {
       'frontend': [
-        `${company} - Explain the difference between Prototypal and Classical Inheritance in JavaScript.`,
-        `${company} - How would you build a highly reusable, accessible Modal component in React?`,
-        `${company} - How do you identify and fix memory leaks or unnecessary re-renders in a large-scale web app?`,
-        `${company} - A client reports the dashboard is slow when loading 10,000 rows. What is your optimization strategy?`,
-        `${company} - How would you implement a search-as-you-type feature with debouncing and caching?`,
+        `${companyTitle} - Explain the difference between Prototypal and Classical Inheritance in JavaScript and how it impacts performance.`,
+        `${companyTitle} - How would you design and implement a highly reusable, fully accessible Modal component in React following WAI-ARIA guidelines?`,
+        `${companyTitle} - How do you identify, debug, and fix memory leaks or unnecessary re-renders in a large-scale React/Next.js application?`,
+        `${companyTitle} - A user reports the dashboard page is lagging when rendering 10,000 active table rows. Describe your virtualization and optimization strategy.`,
+        `${companyTitle} - How would you implement a search-as-you-type search bar featuring debouncing, request cancellation (AbortController), and client-side caching?`,
+        `${companyTitle} - Explain the CSS containment property and how it can be used to optimize rendering performance in complex UI layouts.`,
+        `${companyTitle} - How do you optimize web applications for Core Web Vitals, specifically targeting Largest Contentful Paint (LCP) and Cumulative Layout Shift (CLS)?`,
+        `${companyTitle} - Describe your approach to state management in a micro-frontend architecture. How do you handle cross-app communication?`,
+        `${companyTitle} - Explain how Next.js Server Components differ from Client Components, and when you should use each for optimal load times.`,
+        `${companyTitle} - How would you implement an offline-first caching strategy using Service Workers and IndexedDB for the main user dashboard?`,
+        `${companyTitle} - Explain the security risks associated with frontend applications (like XSS and CSRF) and how you mitigate them using Content Security Policies (CSP).`,
+        `${companyTitle} - How would you design a dark-mode styling system that supports system preference detection, persistent user choice, and zero flash of unstyled content.`,
+        `${companyTitle} - Describe the lifecycle of a rendering frame in a web browser. What happens during style calculation, layout, paint, and composite?`,
+        `${companyTitle} - What are the advantages and drawbacks of CSS Modules versus CSS-in-JS libraries like Styled Components for large codebase maintenance?`,
+        `${companyTitle} - How would you implement a secure and accessible Drag-and-Drop file uploader that supports chunked uploads, progress bars, and file validation?`
       ],
       'backend': [
-        `${company} - Explain the CAP Theorem and how it influences your database choice for a global application.`,
-        `${company} - How would you design a secure JWT-based authentication flow with refresh tokens?`,
-        `${company} - Describe how you would debug and optimize a slow SQL query causing high CPU usage in production.`,
-        `${company} - Your server is hit by a sudden 10x traffic spike. What scaling layers do you activate first?`,
-        `${company} - Design a distributed rate-limiting system that works across multiple geographic regions.`,
+        `${companyTitle} - Explain the CAP Theorem and how it influences database choice and partition tolerance for a globally distributed system.`,
+        `${companyTitle} - How would you design a secure, production-grade JWT-based authentication flow with rotating refresh tokens and token blacklisting?`,
+        `${companyTitle} - Describe how you would diagnose, debug, and resolve a slow-running SQL query causing high CPU utilization on your database server.`,
+        `${companyTitle} - Your API backend experiences a sudden 10x traffic spike. What scaling and mitigation layers do you activate first to prevent downtime?`,
+        `${companyTitle} - Design a distributed rate-limiting middleware that is accurate, low-latency, and works across multiple geographic cluster deployments.`,
+        `${companyTitle} - Explain the differences between connection pooling and establishing new database connections for every request. How do you tune pool sizes?`,
+        `${companyTitle} - Describe the Saga pattern and how you would use it to manage distributed transactions across microservices without using 2PC.`,
+        `${companyTitle} - How would you implement an event-driven system using Apache Kafka or RabbitMQ, ensuring message ordering and exactly-once delivery semantics?`,
+        `${companyTitle} - Explain the differences between SQL transaction isolation levels (Read Uncommitted, Read Committed, Repeatable Read, Serializable) and their concurrency trade-offs.`,
+        `${companyTitle} - How would you design a scalable notification service that handles email, SMS, and push notifications with retry logic and rate-limits?`,
+        `${companyTitle} - What is your strategy for database schema migrations in a high-availability environment with zero downtime?`,
+        `${companyTitle} - Explain how you would prevent SQL Injection, NoSQL Injection, and SSRF (Server-Side Request Forgery) in a Node.js/Nest.js API.`,
+        `${companyTitle} - Describe how you would design and implement an efficient search autocomplete backend serving millions of queries per second.`,
+        `${companyTitle} - How do you optimize database performance using indexes, partition tables, and read-replicas? When are index updates counterproductive?`,
+        `${companyTitle} - Explain the difference between horizontal and vertical scaling, and describe a scenario where horizontal scaling alone is insufficient.`
       ],
       'fullstack': [
-        `${company} - Explain the lifecycle of a request from the browser until it reaches the database and back.`,
-        `${company} - How do you ensure data consistency between a React frontend and a PostgreSQL backend?`,
-        `${company} - What is your approach to securing sensitive API keys in a CI/CD pipeline?`,
-        `${company} - You need to migrate a monolithic app to microservices. How do you handle cross-service communication?`,
-        `${company} - Build a real-time collaborative document editor using WebSockets and conflict resolution.`,
+        `${companyTitle} - Explain the lifecycle of an HTTP/HTTPS request from the moment a user presses enter in the browser until data is retrieved from the database and returned.`,
+        `${companyTitle} - How do you ensure real-time data consistency and state synchronization between a React/Next.js frontend and a PostgreSQL database?`,
+        `${companyTitle} - What is your approach to securing, rotating, and managing sensitive API credentials and keys across development, staging, and production environments?`,
+        `${companyTitle} - You need to migrate a monolithic backend to a microservices architecture. How do you handle database segregation and API gateway routing?`,
+        `${companyTitle} - How would you build a real-time collaborative document editor using WebSockets (or Socket.io) and operational transformation or CRDTs?`,
+        `${companyTitle} - Explain how you would optimize a full-stack flow that currently requires 10 seconds to load due to multiple sequential API calls and heavy database queries.`,
+        `${companyTitle} - How would you implement a secure OAuth2 login flow using third-party providers (like Google or GitHub), including callback handling and state validation?`,
+        `${companyTitle} - Explain the difference between Server-Side Rendering (SSR), Static Site Generation (SSG), and Client-Side Rendering (CSR) from a full-stack perspective.`,
+        `${companyTitle} - Describe your CI/CD pipeline design for a full-stack monorepo. How do you handle automated testing, build caching, and rolling deployments?`,
+        `${companyTitle} - How would you design an analytics dashboard that processes, stores, and visualizes real-time user engagement metrics without degrading core application performance?`,
+        `${companyTitle} - Explain the security implications of CORS (Cross-Origin Resource Sharing) and how to configure it securely for an API gateway.`,
+        `${companyTitle} - How would you design a robust file upload and storage system that handles user profile pictures, including resizing, CDN caching, and access control?`,
+        `${companyTitle} - Explain how to implement database indexing, pagination (cursor-based vs offset-based), and frontend infinite scrolling for large datasets.`,
+        `${companyTitle} - Describe how you would debug a production issue where frontend users randomly receive 502 Bad Gateway errors during high-traffic periods.`,
+        `${companyTitle} - What are the pros and cons of using GraphQL versus REST APIs in a large full-stack application with deeply nested relations?`
       ],
+      'devops': [
+        `${companyTitle} - Describe how you would design a zero-downtime blue-green deployment pipeline using Kubernetes and Helm.`,
+        `${companyTitle} - How do you manage infrastructure drift using Terraform, and how do you handle state locking in a multi-engineer team?`,
+        `${companyTitle} - What is your strategy for monitoring, logging, and alerting in a Kubernetes cluster using Prometheus, Grafana, and ELK/Loki?`,
+        `${companyTitle} - Explain the security best practices for Dockerfiles, including multi-stage builds, non-root users, and vulnerability scanning.`,
+        `${companyTitle} - How would you design and implement an automated disaster recovery plan for a multi-region cloud application?`,
+        `${companyTitle} - Explain the differences between horizontal pod auto-scaling (HPA) and cluster auto-scaling in AWS or GCP.`,
+        `${companyTitle} - How would you secure a CI/CD pipeline against malicious attacks, dependency hijacking, and credential leakage?`,
+        `${companyTitle} - Describe how to implement GitOps workflow using tools like ArgoCD or Flux for automated Kubernetes deployments.`,
+        `${companyTitle} - What is Chaos Engineering, and how would you implement tools like Chaos Mesh or Gremlin to test system resilience?`,
+        `${companyTitle} - How do you optimize cloud infrastructure costs (e.g. AWS or Azure) for a large-scale application with variable traffic?`,
+        `${companyTitle} - Explain the difference between a reverse proxy, a load balancer, and an API Gateway. When do you use each?`,
+        `${companyTitle} - How would you configure a highly secure and isolated Virtual Private Cloud (VPC) with public and private subnets, NAT gateways, and security groups?`,
+        `${companyTitle} - Describe how you would set up a centralized secret management system using HashiCorp Vault or AWS Secrets Manager.`,
+        `${companyTitle} - How do you troubleshoot a container startup failure (CrashLoopBackOff) in a Kubernetes production environment?`,
+        `${companyTitle} - Explain the concept of Infrastructure as Code (IaC) and describe the trade-offs between declarative (Terraform) and imperative (Pulumi) approaches.`
+      ],
+      'ai-ml': [
+        `${companyTitle} - Explain the difference between bias and variance, and describe how you would detect and mitigate overfitting in a deep learning model.`,
+        `${companyTitle} - How would you design a Retrieval-Augmented Generation (RAG) system, including vector database selection, chunking strategy, and metadata filtering?`,
+        `${companyTitle} - Describe how you would optimize a large transformer model (like Llama or BERT) for low-latency production inference using quantization or pruning.`,
+        `${companyTitle} - What is feature engineering? Give examples of how you would preprocess text, image, and tabular data for a machine learning model.`,
+        `${companyTitle} - How would you evaluate the performance of a classification model under extreme class imbalance (e.g. fraud detection)?`,
+        `${companyTitle} - Explain the architecture of a Transformer model, specifically the role of multi-head self-attention and positional encoding.`,
+        `${companyTitle} - Describe how you would build a scalable ML training and deployment pipeline using Kubeflow or SageMaker.`,
+        `${companyTitle} - What are the differences between symmetric and asymmetric search in semantic vector spaces, and how does it influence vector indexing?`,
+        `${companyTitle} - How would you design a recommendation engine that handles the cold-start problem for new users and new items?`,
+        `${companyTitle} - Explain the concept of gradient descent and its variants (SGD, Adam). How do you handle vanishing or exploding gradients?`,
+        `${companyTitle} - Describe the difference between supervised, unsupervised, and reinforcement learning. Give a practical industry use case for each.`,
+        `${companyTitle} - How would you set up automated monitoring to detect data drift and concept drift in a deployed machine learning model?`,
+        `${companyTitle} - What is fine-tuning (e.g. LoRA) versus prompt engineering? When would you choose one over the other for an LLM application?`,
+        `${companyTitle} - How do you handle missing data, outliers, and highly correlated features during the data preparation phase?`,
+        `${companyTitle} - Explain how backpropagation works in deep neural networks, and how activation functions (ReLU, GeLU, Sigmoid) affect learning.`
+      ],
+      'data': [
+        `${companyTitle} - Write a complex SQL query using Window functions (e.g., ROW_NUMBER, LEAD, LAG) to analyze user retention over time.`,
+        `${companyTitle} - Explain the difference between a star schema and a snowflake schema in data warehousing. When do you use each?`,
+        `${companyTitle} - How would you design and implement an A/B testing experiment, including sample size calculation, hypothesis testing, and p-value interpretation?`,
+        `${companyTitle} - Describe your process for cleaning a raw, messy dataset containing duplicates, inconsistent date formats, and missing values in Pandas.`,
+        `${companyTitle} - What is ETL (Extract, Transform, Load) versus ELT? Explain how you would design a data pipeline using dbt and Snowflake.`,
+        `${companyTitle} - Explain the difference between correlation and causation. Give an example of how misinterpreting correlation could lead to bad business decisions.`,
+        `${companyTitle} - How would you design a high-level executive dashboard to track company-wide KPIs, and what metrics would you prioritize?`,
+        `${companyTitle} - Describe linear and logistic regression. In what scenarios is regression analysis preferred over machine learning classifiers?`,
+        `${companyTitle} - How would you identify and handle outliers in a dataset, and how do they impact statistical metrics like mean, median, and standard deviation?`,
+        `${companyTitle} - What is cohort analysis, and how would you use SQL to track the lifetime value (LTV) of monthly customer cohorts?`,
+        `${companyTitle} - Describe how you would explain a complex statistical finding to a non-technical stakeholder or business leader.`,
+        `${companyTitle} - Explain the Central Limit Theorem and why it is fundamental to statistical inference and sampling.`,
+        `${companyTitle} - How do you optimize SQL queries to run faster on datasets containing billions of rows? Discuss partitions, indexes, and execution plans.`,
+        `${companyTitle} - What are the differences between dimensional modeling, Fact tables, and Dimension tables in BI reporting?`,
+        `${companyTitle} - Describe a time you found an unexpected anomaly or insight in a dataset. What action did you take based on that discovery?`
+      ],
+      'tester': [
+        `${companyTitle} - Explain the difference between Unit, Integration, System, and End-to-End (E2E) testing. How do you decide the distribution of your testing pyramid?`,
+        `${companyTitle} - How would you design a comprehensive automated test suite for a modern React frontend using Cypress, Playwright, or Jest?`,
+        `${companyTitle} - What is a flaky test? Describe your strategies for identifying, debugging, and preventing flaky tests in a CI/CD pipeline.`,
+        `${companyTitle} - How would you perform load and performance testing on a REST API using tools like JMeter or K6? What metrics do you monitor?`,
+        `${companyTitle} - Describe the bug lifecycle and explain how you write a clear, actionable bug report for the engineering team.`,
+        `${companyTitle} - What is Test-Driven Development (TDD) versus Behavior-Driven Development (BDD)? What are the pros and cons of each?`,
+        `${companyTitle} - How would you test a web application's security vulnerabilities (e.g. penetration testing, SQL injection, XSS) manually and via automation?`,
+        `${companyTitle} - How do you test microservices that depend on third-party APIs? Discuss API mocking, contract testing, and wiremocking.`,
+        `${companyTitle} - Describe how you would write a comprehensive test plan for a new payment gateway integration.`,
+        `${companyTitle} - Explain the concept of boundary value analysis and equivalence partitioning. Give a practical example.`,
+        `${companyTitle} - How do you perform visual regression testing, and what tools do you use to ensure UI layouts remain pixel-perfect across browsers?`,
+        `${companyTitle} - What is mutation testing, and how does it help measure the effectiveness and quality of your test suite?`,
+        `${companyTitle} - How do you test accessibility (a11y) compliance (WCAG 2.1) in a web application using automated tools and manual methods?`,
+        `${companyTitle} - Describe how you would integrate automated tests into a CI/CD pipeline using GitHub Actions, GitLab CI, or Jenkins.`,
+        `${companyTitle} - Explain the difference between black-box testing, white-box testing, and grey-box testing. When do you use each?`
+      ],
+      'cloud': [
+        `${companyTitle} - Design a highly available, fault-tolerant, and secure multi-region web application architecture using AWS or GCP.`,
+        `${companyTitle} - Explain the difference between serverless computing (e.g., AWS Lambda, Cloud Run) and virtual machines (e.g., EC2, Compute Engine).`,
+        `${companyTitle} - How do you design and enforce Least Privilege access control using Identity & Access Management (IAM) policies in a cloud environment?`,
+        `${companyTitle} - Describe your strategy for cloud cost optimization, including reserved instances, auto-scaling, and lifecycle storage policies.`,
+        `${companyTitle} - What is a Content Delivery Network (CDN), and how would you configure it (e.g., CloudFront, Cloudflare) with caching, HTTPS, and origin shielding?`,
+        `${companyTitle} - How would you design a secure, zero-downtime database migration strategy from an on-premise datacenter to a cloud database (e.g., Amazon RDS, Cloud Spanner)?`,
+        `${companyTitle} - Explain the concept of Infrastructure as Code (IaC) and compare CloudFormation, Terraform, and Pulumi.`,
+        `${companyTitle} - How do you protect a public-facing cloud application from DDoS attacks, SQL Injection, and credential stuffing?`,
+        `${companyTitle} - Describe how to implement secure, encrypted cross-region VPC peering and transit gateway routing.`,
+        `${companyTitle} - What are serverless database solutions (e.g. Aurora Serverless, DynamoDB, Firestore)? What are their trade-offs in terms of cold starts and scale?`,
+        `${companyTitle} - Explain how you would implement centralized logging and auditing across multiple cloud accounts using AWS CloudTrail or GCP Cloud Audit Logs.`,
+        `${companyTitle} - Describe disaster recovery (DR) strategies in the cloud: Backup and Restore, Pilot Light, Warm Standby, and Multi-Site Active-Active.`,
+        `${companyTitle} - How would you set up automated autoscaling rules based on CPU utilization, request count, and custom application metrics?`,
+        `${companyTitle} - What is the shared responsibility model in cloud computing, and how does it apply to operating system patching and data security?`,
+        `${companyTitle} - How do you handle secret management and secure environment injection in a serverless architecture?`
+      ],
+      'cyber': [
+        `${companyTitle} - Explain the OWASP Top 10 vulnerabilities, and describe how to secure an application against Cross-Site Scripting (XSS) and SQL Injection.`,
+        `${companyTitle} - Describe the difference between symmetric and asymmetric encryption, and explain the step-by-step process of an SSL/TLS handshake.`,
+        `${companyTitle} - What is Zero Trust Architecture, and how would you implement it in a corporate network with remote workers?`,
+        `${companyTitle} - How do you conduct threat modeling for a new product, and what methodologies (e.g. STRIDE, DREAD) do you use?`,
+        `${companyTitle} - Explain how a JWT token can be compromised, and how to design a secure token management system to prevent hijacking.`,
+        `${companyTitle} - What is incident response? Describe the phases of responding to a major security breach, including containment, eradication, and post-mortem.`,
+        `${companyTitle} - Explain the difference between a Vulnerability Assessment, a Penetration Test, and a Red Team engagement.`,
+        `${companyTitle} - How would you design a secure Single Sign-On (SSO) and Multi-Factor Authentication (MFA) system for an enterprise?`,
+        `${companyTitle} - What is DNS hijacking, and how do you protect domain names and traffic using DNSSEC, DMARC, and SPF records?`,
+        `${companyTitle} - Describe how to secure REST APIs against credential stuffing, brute force attacks, and broken object-level authorization (BOLA).`,
+        `${companyTitle} - What is social engineering, and how do you implement technical controls (like email filters, DMARC) and user training to defend against it?`,
+        `${companyTitle} - How do you secure data at rest, data in transit, and data in use? Discuss envelope encryption and confidential computing.`,
+        `${companyTitle} - What are the differences between a stateless firewall, a stateful firewall, and a Web Application Firewall (WAF)?`,
+        `${companyTitle} - Explain how cross-site request forgery (CSRF) works, and how to defend against it using SameSite cookies and anti-CSRF tokens.`,
+        `${companyTitle} - Describe the difference between a false positive and a false negative in security alerting. How do you tune a SIEM to minimize fatigue?`
+      ]
     };
-    const matchedRole = Object.keys(banks).find(k => roleKey.includes(k));
-    return banks[matchedRole] || [
-      `${company} - Describe the architecture of a system you recently built.`,
-      `${company} - How do you ensure code quality in a team environment?`,
-      `${company} - How do you solve a technical problem when you have no prior experience with the technology?`,
-      `${company} - You have a tight deadline for a complex feature. How do you prioritize tasks?`,
-      `${company} - How would you improve the technical performance of ${company}'s main application?`,
-    ];
+
+    const matchedKey = Object.keys(banks).find(k => roleKey.includes(k)) || 'frontend';
+    const pool = banks[matchedKey];
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 5);
   }
 
   async generateQuestions(data: { role: string, difficulty: string, company: string }): Promise<string[]> {

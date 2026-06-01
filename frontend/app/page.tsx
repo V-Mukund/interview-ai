@@ -129,6 +129,57 @@ export default function LoginPage() {
                 await setAuthValue('prep_materials', materialsData);
               }
             }
+
+            // Pre-cache offline interview question sets for each role (3 sets per role)
+            const offlineRoles = ['frontend', 'backend', 'fullstack', 'devops', 'ai-ml', 'data', 'tester', 'cloud', 'cyber'];
+            try {
+              const existingSets = (await getAuthValue('offline_question_sets')) || {};
+              const setsToFetch: string[] = [];
+              for (const r of offlineRoles) {
+                if (!existingSets[r] || existingSets[r].length < 3) setsToFetch.push(r);
+              }
+              if (setsToFetch.length > 0) {
+                const fetches = setsToFetch.map(r =>
+                  fetch(`${baseUrl}/prep/questions/async`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.access_token}` },
+                    body: JSON.stringify({ role: r, company: 'Standard', difficulty: 'Intermediate' })
+                  }).then(res => res.ok ? res.json() : null).then(d => ({ role: r, jobId: d?.jobId }))
+                );
+                const jobs = await Promise.all(fetches);
+                // Poll each job for completion (max 60s total)
+                const pollJob = async (jobId: string): Promise<any> => {
+                  for (let i = 0; i < 20; i++) {
+                    await new Promise(res => setTimeout(res, 3000));
+                    try {
+                      const sr = await fetch(`${baseUrl}/queue/status/${jobId}`, {
+                        headers: { 'Authorization': `Bearer ${data.access_token}` }
+                      });
+                      if (!sr.ok) continue;
+                      const sd = await sr.json();
+                      if (sd.state === 'completed') return sd.result;
+                      if (sd.state === 'failed') return null;
+                    } catch { continue; }
+                  }
+                  return null;
+                };
+                for (const job of jobs) {
+                  if (!job.jobId) continue;
+                  const result = await pollJob(job.jobId);
+                  if (result?.questions?.length > 0) {
+                    if (!existingSets[job.role]) existingSets[job.role] = [];
+                    existingSets[job.role].push({
+                      questions: result.questions,
+                      cachedAt: new Date().toISOString(),
+                      used: false
+                    });
+                  }
+                }
+                await setAuthValue('offline_question_sets', existingSets);
+              }
+            } catch (qErr) {
+              console.warn('Failed to pre-cache offline question sets:', qErr);
+            }
           } catch (preCacheErr) {
             console.error('Failed to pre-cache offline credentials or question banks:', preCacheErr);
           }

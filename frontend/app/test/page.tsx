@@ -14,7 +14,7 @@ interface Question {
 }
 
 import { API_BASE_URL } from '../../lib/config';
-import { getAuthValue, removeAuthValue } from '../../lib/auth-store';
+import { getAuthValue, setAuthValue, removeAuthValue } from '../../lib/auth-store';
 
 const baseUrl = API_BASE_URL;
 export default function TestPage() {
@@ -25,6 +25,7 @@ export default function TestPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
   
   const [targetRole, setTargetRole] = useState('Software Developer');
   const [targetCompany, setTargetCompany] = useState('Standard');
@@ -68,6 +69,8 @@ const fetchQuestions = async () => {
   setIsLoading(true);
   setErrorMsg(null);
   const token = await getAuthValue('token');
+  const offline = !navigator.onLine;
+  setIsOffline(offline);
 
   if (!token) {
     setErrorMsg('Session expired. Please log in again.');
@@ -76,6 +79,53 @@ const fetchQuestions = async () => {
     return;
   }
 
+  // --- OFFLINE FALLBACK: Load from IndexedDB ---
+  if (offline) {
+    try {
+      const allSets = (await getAuthValue('offline_question_sets')) || {};
+      const roleKey = role.toLowerCase();
+      const matchedKey = Object.keys(allSets).find(k => roleKey.includes(k));
+      const roleSets = matchedKey ? allSets[matchedKey] : null;
+
+      if (roleSets && roleSets.length > 0) {
+        // Prefer unused sets first
+        let setIndex = roleSets.findIndex((s: any) => !s.used);
+        if (setIndex === -1) {
+          // All used — reset and pick first
+          roleSets.forEach((s: any) => s.used = false);
+          setIndex = 0;
+        }
+        const chosenSet = roleSets[setIndex];
+        chosenSet.used = true;
+        await setAuthValue('offline_question_sets', allSets);
+
+        const mapped = (chosenSet.questions || []).map((q: any, i: number) => ({
+          id: q.id || i + 1,
+          question: q.question,
+          type: q.type || 'text',
+        }));
+
+        if (mapped.length > 0) {
+          setQuestions(mapped);
+          const initialAnswers: Record<number, string> = {};
+          mapped.forEach((q: Question) => { initialAnswers[q.id] = ''; });
+          setAnswers(initialAnswers);
+          setIsLoading(false);
+          return;
+        }
+      }
+      setErrorMsg('No offline question sets available. Please connect to the internet and log in to cache questions.');
+      setIsLoading(false);
+      return;
+    } catch (offErr) {
+      console.error('Offline question load failed:', offErr);
+      setErrorMsg('Failed to load offline questions.');
+      setIsLoading(false);
+      return;
+    }
+  }
+
+  // --- ONLINE: Fetch from server ---
   try {
     const res = await fetch(`${baseUrl}/prep/questions/async`, {
       method: 'POST',
@@ -111,7 +161,7 @@ const fetchQuestions = async () => {
 
     const jobId = data.jobId;
     const POLL_INTERVAL = 3000;
-    const MAX_POLLS = 30; // 30 * 3s = 90s max wait
+    const MAX_POLLS = 30;
 
     const result = await new Promise<any>((resolve, reject) => {
       let pollCount = 0;
@@ -124,60 +174,34 @@ const fetchQuestions = async () => {
         }
         try {
           const statusRes = await fetch(`${baseUrl}/queue/status/${jobId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
+            headers: { 'Authorization': `Bearer ${token}` },
           });
-
           if (!statusRes.ok) {
-            // Don't immediately fail on transient network errors — retry
-            if (pollCount >= 3) {
-              clearInterval(interval);
-              reject(new Error('Failed to poll queue status'));
-            }
+            if (pollCount >= 3) { clearInterval(interval); reject(new Error('Failed to poll queue status')); }
             return;
           }
-
           const statusData = await statusRes.json();
           const currentState = statusData.state || statusData.status;
-
-          if (currentState === 'completed') {
-            clearInterval(interval);
-            resolve(statusData.result);
-          } else if (currentState === 'failed') {
-            clearInterval(interval);
-            reject(new Error(statusData.failedReason || 'Question generation failed'));
-          }
-          // else: still waiting/active — continue polling
+          if (currentState === 'completed') { clearInterval(interval); resolve(statusData.result); }
+          else if (currentState === 'failed') { clearInterval(interval); reject(new Error(statusData.failedReason || 'Question generation failed')); }
         } catch (err: any) {
-          // Tolerate up to 3 consecutive network errors before giving up
-          if (pollCount >= 3) {
-            clearInterval(interval);
-            reject(new Error(err.message || 'Network error while polling'));
-          }
+          if (pollCount >= 3) { clearInterval(interval); reject(new Error(err.message || 'Network error while polling')); }
         }
       }, POLL_INTERVAL);
     });
 
     const generatedQuestions = result?.questions || [];
-
     const mapped = generatedQuestions.map((q: any, index: number) => ({
       id: q.id || index + 1,
       question: q.question,
       type: q.type || 'text',
     }));
 
-    if (mapped.length === 0) {
-      throw new Error('Empty questions from AI');
-    }
+    if (mapped.length === 0) throw new Error('Empty questions from AI');
 
     setQuestions(mapped);
-
     const initialAnswers: Record<number, string> = {};
-    mapped.forEach((q: Question) => {
-      initialAnswers[q.id] = '';
-    });
-
+    mapped.forEach((q: Question) => { initialAnswers[q.id] = ''; });
     setAnswers(initialAnswers);
 
     sessionStorage.setItem(sessionKey, JSON.stringify({
@@ -221,6 +245,12 @@ const fetchQuestions = async () => {
 
   const handleSubmitAll = async () => {
     if (!isSubmitEnabled) return;
+    
+    if (!navigator.onLine) {
+      alert("You are currently offline. Please reconnect to the internet to submit your interview and generate an AI evaluation report!");
+      return;
+    }
+
     setIsSubmitting(true);
     const token = await getAuthValue('token');
     
@@ -353,6 +383,14 @@ const fetchQuestions = async () => {
     <div className="min-h-screen h-screen flex flex-col t-bg-base t-text-pri overflow-hidden font-sans selection:bg-purple-500/30">
       
       {/* 1. TOP HEADER NAVBAR */}
+      {/* Offline Mode Banner */}
+      {isOffline && (
+        <div className="w-full bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-center gap-2 shrink-0">
+          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+          <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Offline Mode — Using cached questions. Submission requires internet.</span>
+        </div>
+      )}
+
       <header className="p-4 lg:px-8 border-b t-border flex justify-between items-center bg-white/[0.02] backdrop-blur-xl shrink-0">
         <div className="flex items-center gap-4">
           <button 
