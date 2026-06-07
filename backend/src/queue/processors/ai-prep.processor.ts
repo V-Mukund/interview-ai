@@ -62,10 +62,14 @@ export class AiPrepProcessor extends WorkerHost {
     const { topic, content } = job.data;
     this.logger.log(`Generating practice questions for: "${topic}"`);
     const rawQuestions = await this.aiService.generatePracticeQuestions(topic, content);
-    // Ensure the result matches the frontend expectation: an array of objects with id, question, and a type.
-    const questions = rawQuestions.map((q: string, index: number) => ({
+    
+    const questions = rawQuestions.map((q: any, index: number) => ({
       id: index + 1,
-      question: q,
+      question: q.question || (typeof q === 'string' ? q : ''),
+      answer: q.answer || '',
+      difficulty: q.difficulty || 'Medium',
+      explanation: q.explanation || '',
+      topic: topic,
       type: 'text',
     }));
     return { questions };
