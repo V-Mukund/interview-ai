@@ -60,6 +60,7 @@ export default function ChatbotPage() {
   const [completedInterviews, setCompletedInterviews] = useState<any[]>([]);
   const [selectedInterviews, setSelectedInterviews] = useState<(string | number)[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -291,15 +292,125 @@ export default function ChatbotPage() {
     }
   };
 
+  const syncOfflineAttempt = async (attempt: any) => {
+    const token = await getAuthValue('token');
+    if (!token) {
+      alert("Please log in to submit your interview.");
+      return;
+    }
+    
+    setIsSyncing(true);
+    setIsLoadingHistory(true);
+    try {
+      const res = await fetch(`${baseUrl}/prep/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          role: attempt.role,
+          company: attempt.company,
+          answers: attempt.answers
+        })
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || 'Failed to submit assessment answers');
+      }
+      
+      const data = await res.json();
+      if (data.jobId) {
+        // Poll for evaluation completion
+        const EVAL_POLL_INTERVAL = 2500;
+        const EVAL_MAX_POLLS = 48; // 120s max
+
+        const pollJobStatus = async (jobId: string, token: string): Promise<any> => {
+          return new Promise((resolve, reject) => {
+            let pollCount = 0;
+            const interval = setInterval(async () => {
+              pollCount++;
+              if (pollCount > EVAL_MAX_POLLS) {
+                clearInterval(interval);
+                reject(new Error('Evaluation timed out. Checked history later.'));
+                return;
+              }
+              try {
+                const statusRes = await fetch(`${baseUrl}/queue/status/${jobId}`, {
+                  headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!statusRes.ok) {
+                  if (pollCount >= 3) {
+                    clearInterval(interval);
+                    reject(new Error('Failed to get evaluation status'));
+                  }
+                  return;
+                }
+                const statusData = await statusRes.json();
+                if (statusData.state === 'completed' || statusData.status === 'completed') {
+                  clearInterval(interval);
+                  resolve(statusData.result);
+                } else if (statusData.state === 'failed' || statusData.status === 'failed') {
+                  clearInterval(interval);
+                  reject(new Error(statusData.failedReason || 'Evaluation failed'));
+                }
+              } catch (err: any) {
+                if (pollCount >= 3) {
+                  clearInterval(interval);
+                  reject(new Error(err.message || 'Network error'));
+                }
+              }
+            }, EVAL_POLL_INTERVAL);
+          });
+        };
+
+        const result = await pollJobStatus(data.jobId, token || '');
+
+        // Remove from pending list in IndexedDB
+        const pendingList = (await getAuthValue('pending_interviews')) || [];
+        const updatedPending = pendingList.filter((item: any) => item.id !== attempt.id);
+        await setAuthValue('pending_interviews', updatedPending);
+
+        // Success! Refresh history and redirect to results
+        alert('Assessment evaluated successfully!');
+        if (result.id) {
+          router.push(`/result?id=${result.id}`);
+        } else {
+          router.push('/result');
+        }
+      } else {
+        throw new Error('No jobId returned from server');
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Failed to submit attempt.');
+    } finally {
+      setIsSyncing(false);
+      setIsLoadingHistory(false);
+      fetchCompletedInterviews();
+      fetchDashboardStats();
+    }
+  };
+
   const fetchCompletedInterviews = async () => {
     setIsLoadingHistory(true);
     setHistoryError(null);
+
+    let pending: any[] = [];
+    try {
+      pending = (await getAuthValue('pending_interviews')) || [];
+    } catch (e) {
+      console.warn('Failed to load pending interviews:', e);
+    }
 
     // Try to load cached completed interviews first
     try {
       const cached = localStorage.getItem('chatbot_completed_interviews');
       if (cached) {
-        setCompletedInterviews(JSON.parse(cached));
+        const cachedList = JSON.parse(cached);
+        const filteredCached = cachedList.filter((item: any) => !item.isOffline);
+        setCompletedInterviews([...pending, ...filteredCached]);
         setIsLoadingHistory(false);
       }
     } catch (e) {
@@ -315,7 +426,7 @@ export default function ChatbotPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setCompletedInterviews(data);
+        setCompletedInterviews([...pending, ...data]);
         localStorage.setItem('chatbot_completed_interviews', JSON.stringify(data));
       } else {
         setHistoryError('Could not retrieve mock attempts history.');
@@ -382,33 +493,44 @@ export default function ChatbotPage() {
       
     if (!confirm(message)) return;
 
-    const token = await getAuthValue('token');
-    try {
-      const res = await fetch(`${baseUrl}/api/interview/history`, {
-        method: 'DELETE',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify({ interviewIds: idsToDelete })
-      });
+    const offlineIds = idsToDelete.filter(id => typeof id === 'string' && id.startsWith('offline-'));
+    const onlineIds = idsToDelete.filter(id => !(typeof id === 'string' && id.startsWith('offline-')));
 
-      if (res.ok) {
-        // Remove deleted items from UI state immediately
-        setCompletedInterviews(prev => prev.filter(item => !idsToDelete.includes(item.id)));
-        
-        // Remove deleted items from current selection if any
-        setSelectedInterviews(prev => prev.filter(id => !idsToDelete.includes(id)));
-
-        // Refresh stats
-        fetchDashboardStats();
-      } else {
-        alert('Failed to delete interview history.');
+    if (offlineIds.length > 0) {
+      try {
+        const pendingList = (await getAuthValue('pending_interviews')) || [];
+        const updatedPending = pendingList.filter((item: any) => !offlineIds.includes(item.id));
+        await setAuthValue('pending_interviews', updatedPending);
+      } catch (err) {
+        console.error('Failed to delete pending offline interviews:', err);
       }
-    } catch (err) {
-      console.error('Failed to delete interview history:', err);
-      alert('Error occurred while deleting history.');
     }
+
+    if (onlineIds.length > 0) {
+      const token = await getAuthValue('token');
+      try {
+        const res = await fetch(`${baseUrl}/api/interview/history`, {
+          method: 'DELETE',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ interviewIds: onlineIds })
+        });
+
+        if (!res.ok) {
+          alert('Failed to delete online interview history.');
+        }
+      } catch (err) {
+        console.error('Failed to delete online interview history:', err);
+        alert('Error occurred while deleting history.');
+      }
+    }
+
+    // Refresh state
+    fetchCompletedInterviews();
+    fetchDashboardStats();
+    setSelectedInterviews(prev => prev.filter(id => !idsToDelete.includes(id)));
   };
 
 
@@ -508,7 +630,12 @@ export default function ChatbotPage() {
     localStorage.setItem('target_company', currentCompany || 'Standard');
     localStorage.setItem('target_difficulty', difficulty);
 
-    router.push('/test');
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+    if (offline) {
+      router.push('/offline-interview');
+    } else {
+      router.push('/test');
+    }
   };
 
   const handleMockSubmit = async (answer: string) => {
@@ -1233,9 +1360,11 @@ export default function ChatbotPage() {
                               color: 'from-neutral-800 to-neutral-600'
                             };
 
-                            const scoreColor = item.score >= 80 ? 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/20' : 
-                                              item.score >= 65 ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20' : 
-                                              'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20';
+                            const scoreColor = item.isOffline
+                              ? 'text-amber-500 bg-amber-500/10 border-amber-500/20'
+                              : item.score >= 80 ? 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/20' : 
+                                item.score >= 65 ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20' : 
+                                'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20';
 
                             const isSelected = selectedInterviews.includes(item.id);
 
@@ -1281,24 +1410,40 @@ export default function ChatbotPage() {
 
                                 <td className="py-4 text-center">
                                   <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border ${scoreColor}`}>
-                                    {item.score}%
+                                    {item.isOffline ? 'Pending' : `${item.score}%`}
                                   </span>
                                 </td>
 
                                 <td className="py-4 text-center">
                                   <span className="text-sm font-bold text-neutral-850 dark:text-neutral-250">
-                                    {item.accuracy}%
+                                    {item.isOffline ? '-' : `${item.accuracy}%`}
                                   </span>
                                 </td>
 
                                 <td className="py-4 text-right pr-4">
                                   <div className="flex items-center justify-end gap-2.5">
-                                    <button
-                                      onClick={() => router.push(`/result?id=${item.id}`)}
-                                      className="px-4 py-2 rounded-xl bg-purple-600/10 border border-purple-500/20 text-purple-400 hover:bg-purple-600 hover:text-white font-bold text-xs transition-all shadow-sm shadow-purple-900/10 cursor-pointer"
-                                    >
-                                      View Report
-                                    </button>
+                                    {item.isOffline ? (
+                                      isOnline ? (
+                                        <button
+                                          onClick={() => syncOfflineAttempt(item)}
+                                          disabled={isSyncing}
+                                          className="px-4 py-2 rounded-xl bg-green-600/10 border border-green-500/20 text-green-400 hover:bg-green-600 hover:text-white font-bold text-xs transition-all shadow-sm shadow-green-900/10 cursor-pointer disabled:opacity-50"
+                                        >
+                                          {isSyncing ? "Syncing..." : "Sync & Analyze"}
+                                        </button>
+                                      ) : (
+                                        <span className="px-3 py-2 rounded-xl bg-neutral-800 text-neutral-450 border border-neutral-700 font-bold text-xs">
+                                          Pending Sync
+                                        </span>
+                                      )
+                                    ) : (
+                                      <button
+                                        onClick={() => router.push(`/result?id=${item.id}`)}
+                                        className="px-4 py-2 rounded-xl bg-purple-600/10 border border-purple-500/20 text-purple-400 hover:bg-purple-600 hover:text-white font-bold text-xs transition-all shadow-sm shadow-purple-900/10 cursor-pointer"
+                                      >
+                                        View Report
+                                      </button>
+                                    )}
                                   </div>
                                 </td>
                               </tr>
@@ -1319,9 +1464,11 @@ export default function ChatbotPage() {
                           color: 'from-neutral-800 to-neutral-600'
                         };
 
-                        const scoreColor = item.score >= 80 ? 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/20' : 
-                                          item.score >= 65 ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20' : 
-                                          'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20';
+                        const scoreColor = item.isOffline
+                          ? 'text-amber-500 bg-amber-500/10 border-amber-500/20'
+                          : (item.score >= 80 ? 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/20' : 
+                             item.score >= 65 ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20' : 
+                             'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20');
 
                         const isSelected = selectedInterviews.includes(item.id);
 
@@ -1346,7 +1493,7 @@ export default function ChatbotPage() {
                                 </div>
                               </div>
                               <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border ${scoreColor}`}>
-                                {item.score}%
+                                {item.isOffline ? 'Pending' : `${item.score}%`}
                               </span>
                             </div>
 
@@ -1362,12 +1509,28 @@ export default function ChatbotPage() {
                                 </p>
                                 <p className="text-[9px] font-black uppercase tracking-wider text-neutral-500">Completed On</p>
                               </div>
-                              <button
-                                onClick={() => router.push(`/result?id=${item.id}`)}
-                                className="px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-500 font-bold text-xs transition-all shadow-sm shadow-purple-900/10 cursor-pointer"
-                              >
-                                View Report
-                              </button>
+                              {item.isOffline ? (
+                                isOnline ? (
+                                  <button
+                                    onClick={() => syncOfflineAttempt(item)}
+                                    disabled={isSyncing}
+                                    className="px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-500 font-bold text-xs transition-all shadow-sm shadow-green-900/10 cursor-pointer disabled:opacity-50"
+                                  >
+                                    {isSyncing ? "Syncing..." : "Sync & Analyze"}
+                                  </button>
+                                ) : (
+                                  <span className="px-3 py-2 rounded-xl bg-neutral-800 text-neutral-450 border border-neutral-700 font-bold text-xs">
+                                    Pending Sync
+                                  </span>
+                                )
+                              ) : (
+                                <button
+                                  onClick={() => router.push(`/result?id=${item.id}`)}
+                                  className="px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-500 font-bold text-xs transition-all shadow-sm shadow-purple-900/10 cursor-pointer"
+                                >
+                                  View Report
+                                </button>
+                              )}
                             </div>
                           </div>
                         );
@@ -2147,19 +2310,42 @@ export default function ChatbotPage() {
                             </div>
                             
                             <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0">
-                              <span className="inline-flex items-center justify-center px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-black mr-2">
-                                Score: {chat.score}/100
+                              <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-black mr-2 border ${
+                                chat.isOffline 
+                                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' 
+                                  : 'bg-purple-500/10 border-purple-500/20 text-purple-400'
+                              }`}>
+                                Score: {chat.isOffline ? 'Pending' : `${chat.score}/100`}
                               </span>
                               <div className="flex items-center gap-2">
-                                <button 
-                                  onClick={() => {
-                                    setShowAllAttemptsModal(false);
-                                    router.push(`/result?id=${chat.id}`);
-                                  }}
-                                  className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-sm font-black uppercase tracking-widest hover:bg-purple-500 transition-all cursor-pointer"
-                                >
-                                  View Report
-                                </button>
+                                {chat.isOffline ? (
+                                  isOnline ? (
+                                    <button
+                                      onClick={() => {
+                                        setShowAllAttemptsModal(false);
+                                        syncOfflineAttempt(chat);
+                                      }}
+                                      disabled={isSyncing}
+                                      className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-sm font-black uppercase tracking-widest hover:bg-green-500 transition-all cursor-pointer disabled:opacity-50"
+                                    >
+                                      {isSyncing ? "Syncing..." : "Sync"}
+                                    </button>
+                                  ) : (
+                                    <span className="px-2 py-1 rounded bg-neutral-800 text-neutral-450 border border-neutral-700 font-bold text-xs">
+                                      Pending Sync
+                                    </span>
+                                  )
+                                ) : (
+                                  <button 
+                                    onClick={() => {
+                                      setShowAllAttemptsModal(false);
+                                      router.push(`/result?id=${chat.id}`);
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-sm font-black uppercase tracking-widest hover:bg-purple-500 transition-all cursor-pointer"
+                                  >
+                                    View Report
+                                  </button>
+                                )}
                                 <button 
                                   onClick={() => handleDeleteInterviews([chat.id], false)}
                                   className="p-1.5 rounded-lg border border-red-500/20 text-red-550 hover:bg-red-550/15 hover:border-red-500/40 text-red-400 transition-all cursor-pointer"

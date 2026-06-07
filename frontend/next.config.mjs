@@ -10,9 +10,9 @@ const withPWA = withPWAInit({
 
   buildExcludes: [/app-build-manifest\.json$/],
 
-  // fallbacks: {
-  //   document: "/_offline",
-  // },
+  fallbacks: {
+    document: "/_offline",
+  },
 
   runtimeCaching: [
    

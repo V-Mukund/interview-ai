@@ -8,6 +8,311 @@ import { getAuthValue, setAuthValue } from '../lib/auth-store';
 
 const baseUrl = API_BASE_URL;
 
+const PREDEFINED_QUESTIONS: Record<string, Array<{question: string, answer: string, explanation?: string, difficulty: 'Easy' | 'Medium' | 'Hard'}>> = {
+  DBMS: [
+    {
+      question: "What is the difference between SQL and NoSQL databases?",
+      answer: "SQL databases are relational, table-based, use structured query language, and have a predefined schema. They are vertically scalable and follow ACID properties (e.g., PostgreSQL, MySQL). NoSQL databases are non-relational, document, key-value, wide-column, or graph-based, with dynamic schemas. They are horizontally scalable and prioritize BASE properties (e.g., MongoDB, Redis).",
+      explanation: "Choose SQL when data integrity and ACID transaction support are paramount. Choose NoSQL for rapid scaling, unstructured data, and high-velocity reads/writes.",
+      difficulty: "Easy"
+    },
+    {
+      question: "What are the ACID properties in database systems?",
+      answer: "ACID stands for: Atomicity (all-or-nothing execution of transaction operations), Consistency (preserving database invariants and validation rules), Isolation (ensuring concurrent transactions do not interfere with each other), and Durability (guaranteeing committed data survives power losses or system crashes).",
+      explanation: "These properties ensure safe database transactions even in the presence of failures.",
+      difficulty: "Medium"
+    },
+    {
+      question: "What is database normalization and why is it used?",
+      answer: "Database normalization is the process of organizing attributes and tables of a relational database to minimize data redundancy and prevent design anomalies (insertion, update, and deletion anomalies). It involves applying normal forms (1NF, 2NF, 3NF, BCNF) systematically.",
+      explanation: "Normalization splits large tables to reduce redundancy, utilizing foreign keys to maintain relationships.",
+      difficulty: "Hard"
+    }
+  ],
+  OS: [
+    {
+      question: "What is the difference between a process and a thread?",
+      answer: "A process is a self-contained execution environment with its own allocated virtual address space, memory page tables, file descriptors, and security context. A thread is the basic unit of CPU utilization that runs within a process, sharing the parent process's memory space, open files, and system resources.",
+      explanation: "Processes are isolated from each other, making inter-process communication (IPC) slower. Threads share memory, allowing fast communication, but require careful synchronization (mutexes, semaphores) to prevent race conditions.",
+      difficulty: "Easy"
+    },
+    {
+      question: "What is virtual memory and how does page faulting work?",
+      answer: "Virtual memory is a memory management technique that provides the illusion of a large contiguous RAM by mapping process virtual addresses to physical RAM or secondary storage (swap space). A page fault is a hardware interrupt triggered by the MMU when a thread tries to access a virtual page that is not loaded in physical RAM.",
+      explanation: "On a page fault, the OS finds the page in swap space, loads it into a physical memory frame, updates the page table, and resumes the instruction.",
+      difficulty: "Medium"
+    },
+    {
+      question: "What is a deadlock and what are the four Coffman conditions required for it to occur?",
+      answer: "A deadlock is a situation where a set of processes are permanently blocked because each process holds a resource and waits for another resource held by another process in the set. The four necessary conditions are: 1. Mutual Exclusion, 2. Hold and Wait, 3. No Preemption, and 4. Circular Wait.",
+      explanation: "To prevent deadlocks, at least one of these conditions must be broken (e.g., acquiring resources in a globally defined order to eliminate circular wait).",
+      difficulty: "Hard"
+    }
+  ],
+  CN: [
+    {
+      question: "Explain the TCP three-way handshake process.",
+      answer: "The three-way handshake establishes a reliable, bidirectional TCP connection: 1. The client sends a SYN packet with a random sequence number (Seq=x) to the server. 2. The server responds with a SYN-ACK packet containing its own sequence number (Seq=y) and acknowledges the client's packet (Ack=x+1). 3. The client sends an ACK packet back (Ack=y+1) to confirm.",
+      explanation: "This synchronization process ensures both sides are ready and agree on initial sequence numbers.",
+      difficulty: "Easy"
+    },
+    {
+      question: "What is the difference between TCP and UDP?",
+      answer: "TCP (Transmission Control Protocol) is connection-oriented, reliable, guarantees packet delivery and ordering, performs flow control and congestion control, but has high header overhead (20-60 bytes). UDP (User Datagram Protocol) is connectionless, unreliable, does not guarantee delivery or packet order, but is fast and lightweight (8 bytes header).",
+      explanation: "TCP is used for HTTP, SSH, and SMTP. UDP is used for DNS, VoIP, streaming, and online gaming.",
+      difficulty: "Medium"
+    },
+    {
+      question: "How does DNS resolution work?",
+      answer: "DNS (Domain Name System) translates human-readable domain names (e.g., google.com) into IP addresses. The resolution steps are: 1. Client queries the local recursive resolver. 2. If not cached, the resolver queries a Root Name Server. 3. The Root directs the resolver to a TLD (Top-Level Domain) server (e.g., .com). 4. The TLD server directs it to the domain's Authoritative Name Server, which returns the IP.",
+      explanation: "Caching at the browser, OS, and recursive resolver levels accelerates subsequent queries.",
+      difficulty: "Hard"
+    }
+  ],
+  React: [
+    {
+      question: "What is the Virtual DOM and how does reconciliation work in React?",
+      answer: "The Virtual DOM is a lightweight JavaScript representation of the real DOM. When state or props change, React builds a new Virtual DOM tree, compares it with the previous tree using a highly optimized diffing algorithm (O(N) complexity), and batch-updates only the changed elements in the real DOM.",
+      explanation: "This reconciliation process avoids expensive full-layout reflows in the browser, making UI updates highly efficient.",
+      difficulty: "Easy"
+    },
+    {
+      question: "What are the rules of React Hooks, and why is the useEffect clean-up function necessary?",
+      answer: "Rules of Hooks: 1. Only call hooks at the top level of your functional component (not inside loops, conditions, or nested functions). 2. Only call hooks from React function components or custom hooks. The useEffect clean-up function executes before the component unmounts or before the effect runs again, clearing timers, subscriptions, or event listeners.",
+      explanation: "Failing to clean up side-effects leads to memory leaks and unexpected behavior.",
+      difficulty: "Medium"
+    },
+    {
+      question: "What is the difference between React Server Components (RSC) and Client Components?",
+      answer: "React Server Components execute exclusively on the server, permitting direct database querying, reducing client bundle size, and improving initial page load. Client Components are hydrated on the client, allowing use of state (useState), effects (useEffect), and browser-specific APIs.",
+      explanation: "Next.js App Router defaults to Server Components. You add 'use client' at the top of a file to declare a Client Component.",
+      difficulty: "Hard"
+    }
+  ],
+  NextJs: [
+    {
+      question: "What is the difference between SSR, SSG, and ISR in Next.js?",
+      answer: "SSR (Server-Side Rendering) pre-renders pages on the server for every incoming request. SSG (Static Site Generation) pre-renders pages once at build time. ISR (Incremental Static Regeneration) allows statically generated pages to rebuild in the background at set intervals (e.g., every 60 seconds) without a full site rebuild.",
+      explanation: "Use SSG/ISR for blogs and marketing pages. Use SSR for highly dynamic pages like user dashboards.",
+      difficulty: "Medium"
+    },
+    {
+      question: "Explain how file-system routing and nested layouts work in Next.js App Router.",
+      answer: "The App Router uses directory structures under the `app/` folder to define routes. A folder defines a path segment (e.g., `app/dashboard/settings` maps to `/dashboard/settings`). Within folders, special files are recognized: `page.tsx` defines the route UI, `layout.tsx` defines a persistent layout shared by sub-routes, and `loading.tsx` or `error.tsx` handle lifecycle states.",
+      explanation: "Nested layouts do not re-render when navigating between sub-routes, preserving state.",
+      difficulty: "Hard"
+    }
+  ],
+  APIs: [
+    {
+      question: "What are the core differences between REST, GraphQL, and gRPC?",
+      answer: "REST uses resource-oriented URIs, standard HTTP verbs (GET, POST, etc.), and returns complete JSON payloads. GraphQL uses a single endpoint and allows clients to query exact fields, eliminating over-fetching and under-fetching. gRPC is a binary framework using HTTP/2, Protocol Buffers, and streaming, designed for ultra-fast microservice communications.",
+      explanation: "Select REST for general web APIs, GraphQL for complex client-specified UIs, and gRPC for internal backend microservices.",
+      difficulty: "Medium"
+    },
+    {
+      question: "What does it mean for an HTTP method to be idempotent?",
+      answer: "An HTTP method is idempotent if multiple identical requests have the exact same server state outcome as a single request. GET, PUT, DELETE, HEAD, and OPTIONS are idempotent. POST is not idempotent, as executing it multiple times typically creates multiple resources.",
+      explanation: "Even if the server response changes (e.g., DELETE returns 200 first, then 404), the server resource state remains the same, making it idempotent.",
+      difficulty: "Easy"
+    }
+  ],
+  JWT: [
+    {
+      question: "What is the structure of a JSON Web Token (JWT) and how is it verified?",
+      answer: "A JWT is a base64url-encoded string containing three parts separated by dots: 1. Header (specifies signing algorithm and token type), 2. Payload (claims/user data like sub, email, expiration), and 3. Signature (constructed by hash of header + payload + a server-side secret key). Verification involves recalculating this hash on the server using the secret and comparing it.",
+      explanation: "Since the signature can only be generated with the server's private secret, it guarantees the payload hasn't been altered.",
+      difficulty: "Easy"
+    },
+    {
+      question: "How do short-lived Access Tokens and long-lived Refresh Tokens secure an application?",
+      answer: "Access tokens are short-lived (e.g., 15 minutes) and sent with each request for authentication. When they expire, the client sends a long-lived Refresh Token (stored in a secure HttpOnly cookie) to a refresh endpoint to receive a new access token, preventing user logout.",
+      explanation: "This strategy limits the risk of access token leakage and allows token revocation by invalidating refresh tokens on the database.",
+      difficulty: "Medium"
+    }
+  ],
+  PostgreSQL: [
+    {
+      question: "What is a database index and how does a B-Tree index work in PostgreSQL?",
+      answer: "An index is a performance-tuning structure that speeds up data retrieval. A B-Tree (Balanced Tree) index organizes column values in a sorted, balanced tree structure. Lookups, ranges, and sorting traverse from the root node to the appropriate leaf node containing row identifiers (TIDs) in logarithmic O(log N) time.",
+      explanation: "PostgreSQL defaults to B-Tree indexes for most data types.",
+      difficulty: "Medium"
+    },
+    {
+      question: "Explain database connection pooling and why tools like pgBouncer are necessary.",
+      answer: "PostgreSQL spawns a separate backend process for each client connection, consuming about 10MB of memory per process. Connection pooling maintains a pool of pre-established database connections that can be reused by incoming application requests. pgBouncer manages this pool, reducing connection overhead and resource usage.",
+      explanation: "For high-traffic applications, direct connections will crash the database due to process limits.",
+      difficulty: "Hard"
+    }
+  ],
+  Docker: [
+    {
+      question: "What is the difference between a Docker image and a Docker container?",
+      answer: "A Docker image is a read-only, static template containing the application code, runtime, libraries, environment variables, and configuration files. A Docker container is a runtime instance of an image. It is an isolated, lightweight process execution sandbox running on the host OS kernel.",
+      explanation: "You can run multiple independent containers from a single image.",
+      difficulty: "Easy"
+    },
+    {
+      question: "How do multi-stage Docker builds optimize image size?",
+      answer: "Multi-stage builds utilize multiple `FROM` statements in a single Dockerfile. You can compile your application or install build-time dependencies in an early, heavy 'builder' stage, and then copy only the compiled static binaries or production assets into a final, minimal runtime stage (e.g., alpine or scratch).",
+      explanation: "This keeps development utilities and compilers out of the production image, shrinking size and improving security.",
+      difficulty: "Medium"
+    }
+  ],
+  Kubernetes: [
+    {
+      question: "What is a Pod, and how does a Deployment manage Pods in Kubernetes?",
+      answer: "A Pod is the smallest deployable unit in Kubernetes, hosting one or more tightly-coupled containers that share the same network interface, IP address, port space, and storage volumes. A Deployment is a controller that monitors Pod health and automatically handles scaling, self-healing, rolling updates, and rollback strategies.",
+      explanation: "Deployments maintain a specified replica count of Pods across cluster nodes.",
+      difficulty: "Easy"
+    },
+    {
+      question: "What is the difference between ClusterIP, NodePort, and LoadBalancer services?",
+      answer: "1. ClusterIP exposes the service on an internal IP address accessible only within the cluster (default). 2. NodePort exposes the service on a static port (30000-32767) on each node's physical IP address. 3. LoadBalancer provisions a public cloud provider's external load balancer that automatically routes traffic to NodePort/ClusterIP.",
+      explanation: "Use ClusterIP for database and internal services, NodePort/LoadBalancer to expose public entrypoints.",
+      difficulty: "Medium"
+    }
+  ],
+  ML: [
+    {
+      question: "Explain the bias-variance tradeoff in Machine Learning.",
+      answer: "Bias is error from erroneous assumptions in the learning algorithm (underfitting). Variance is error from sensitivity to small fluctuations in the training set (overfitting). The tradeoff states that as you increase model complexity to lower bias, you typically increase variance, and vice-versa.",
+      explanation: "The goal is to find the sweet spot where generalization error is minimized on unseen data.",
+      difficulty: "Easy"
+    },
+    {
+      question: "How do L1 and L2 regularization prevent overfitting?",
+      answer: "Regularization adds a penalty term to the loss function to constrain weights: L1 (Lasso) adds the sum of the absolute values of weights, driving non-essential weights to zero (acting as feature selection). L2 (Ridge) adds the sum of squared weights, shrinking weights close to zero but not completely to zero.",
+      explanation: "By penalizing large weights, regularization prevents the model from fitting noise in the training data.",
+      difficulty: "Medium"
+    }
+  ],
+  DL: [
+    {
+      question: "What is backpropagation and how does it optimize neural network weights?",
+      answer: "Backpropagation is an algorithm used to calculate the gradient of the loss function with respect to the network weights. It computes gradients layer-by-layer backwards from the output layer using the calculus chain rule, and updates weights in the direction that minimizes the loss using an optimizer like SGD or Adam.",
+      explanation: "It is the core training mechanism of deep neural networks.",
+      difficulty: "Medium"
+    },
+    {
+      question: "What is the vanishing gradient problem, and how do ReLU and residual connections mitigate it?",
+      answer: "In deep networks, backpropagating gradients through activation functions like sigmoid/tanh multiplies values less than 1, causing gradients to shrink exponentially as they reach early layers. ReLU mitigates this because its derivative is 1 for positive inputs. Residual connections (ResNets) create skip connections, letting gradients flow directly backwards.",
+      explanation: "Without gradients, early layers cannot learn features from the input data.",
+      difficulty: "Hard"
+    }
+  ],
+  LLMs: [
+    {
+      question: "Explain the Self-Attention mechanism in Transformer models.",
+      answer: "Self-attention allows tokens in a sequence to calculate how much focus or weight they should place on all other tokens in the sequence. It projects input embeddings into three vectors: Query (Q), Key (K), and Value (V). It calculates dot products between Q and K to get attention weights, runs a softmax, and multiplies by V to get a contextual embedding.",
+      explanation: "This enables parallel processing of sequences and captures long-range dependencies better than RNNs/LSTMs.",
+      difficulty: "Hard"
+    },
+    {
+      question: "What is RLHF (Reinforcement Learning from Human Feedback) in LLM training?",
+      answer: "RLHF aligns model outputs with human preferences (helpfulness, honesty, safety): 1. Humans evaluate and rank model outputs. 2. A separate Reward Model is trained to predict human scores. 3. The LLM is fine-tuned against this reward model using reinforcement learning (PPO) to maximize positive output scores.",
+      explanation: "It transforms raw text predictors into safe, helpful chat assistants.",
+      difficulty: "Medium"
+    }
+  ],
+  AWS: [
+    {
+      question: "What is the difference between Amazon EC2, Amazon ECS, and AWS Lambda?",
+      answer: "EC2 provides raw Virtual Machines (IaaS) where you control the OS, networking, and scaling. ECS is a managed container orchestration service (like Kubernetes) for running Dockerized apps. AWS Lambda is a serverless Function-as-a-Service (FaaS) that executes code on-demand in response to events (automatically scaling and charging per millisecond).",
+      explanation: "Choose EC2 for legacy/monolithic systems, ECS for microservices, and Lambda for event-driven functions.",
+      difficulty: "Easy"
+    },
+    {
+      question: "How does the evaluation flow of AWS IAM policies work?",
+      answer: "AWS IAM processes policies using a structured flow: 1. By default, all requests are Denied. 2. IAM evaluates all applicable identity-based and resource-based policies. 3. If there is an explicit DENY in any policy, the request is immediately denied. 4. If there is an explicit ALLOW, the request is allowed. 5. If no explicit allow/deny exists, it defaults to DENY.",
+      explanation: "An explicit Deny always overrides an explicit Allow.",
+      difficulty: "Medium"
+    }
+  ],
+  Azure: [
+    {
+      question: "What are Resource Groups and Azure Resource Manager (ARM) templates?",
+      answer: "An Azure Resource Group is a logical container that groups related Azure resources (databases, virtual machines, web apps) for unified deployment, management, billing, and access control. ARM templates are JSON or Bicep files that declare the infrastructure configuration, enabling Infrastructure-as-Code (IaC) deployments.",
+      explanation: "Deleting a Resource Group automatically cleans up all resources contained within it.",
+      difficulty: "Easy"
+    },
+    {
+      question: "What is Azure Active Directory (now Microsoft Entra ID)?",
+      answer: "Microsoft Entra ID is a cloud-based identity and access management service. It manages user identities, single sign-on (SSO), multi-factor authentication (MFA), role-based access control (RBAC), and conditional access policies for enterprise cloud resources and applications.",
+      explanation: "It is the primary authorization and authentication engine in the Azure cloud ecosystem.",
+      difficulty: "Medium"
+    }
+  ],
+  Selenium: [
+    {
+      question: "Explain the differences between implicit, explicit, and fluent waits in Selenium.",
+      answer: "1. Implicit Wait sets a global timeout for WebDriver to poll the DOM for any element before throwing a NoSuchElementException. 2. Explicit Wait waits for a specific expected condition (e.g., visibilityOfElementLocated) before continuing. 3. Fluent Wait defines the maximum wait time, polling interval, and list of exceptions to ignore during polling.",
+      explanation: "Do not mix implicit and explicit waits, as it can cause unpredictable timeout delays.",
+      difficulty: "Medium"
+    },
+    {
+      question: "What is the Page Object Model (POM) in Selenium test automation?",
+      answer: "Page Object Model is a design pattern where each web page in the application is represented by a class. This page class holds the locators (selectors) for web elements and methods defining the page's actions (e.g., login, type). Test classes call these page class methods rather than interacting with elements directly.",
+      explanation: "This decouples test logic from UI layout, making tests much easier to maintain when UI changes.",
+      difficulty: "Easy"
+    }
+  ],
+  Testing: [
+    {
+      question: "What are the differences between Unit, Integration, and End-to-End (E2E) testing?",
+      answer: "Unit tests verify individual functions or components in complete isolation, mocking external dependencies. Integration tests verify that multiple components, databases, or microservices work together correctly. E2E tests validate the entire application flow in a real environment from the user's browser down to the database.",
+      explanation: "Unit tests are cheap and fast; E2E tests are expensive, slow, but provide the highest confidence.",
+      difficulty: "Easy"
+    },
+    {
+      question: "What is Test-Driven Development (TDD) and its cycle?",
+      answer: "TDD is a development technique where you write tests before writing the actual code. The cycle is: 1. RED (write a failing test for desired functionality), 2. GREEN (write the minimum implementation code to make the test pass), 3. REFACTOR (clean up the code while ensuring all tests remain green).",
+      explanation: "TDD leads to modular, clean code and extremely high test coverage.",
+      difficulty: "Medium"
+    }
+  ],
+  Cybersecurity: [
+    {
+      question: "Explain Cross-Site Scripting (XSS) vs Cross-Site Request Forgery (CSRF).",
+      answer: "XSS occurs when an attacker injects malicious client-side script into a trusted site, executing in the victim's browser to steal cookies or session tokens. CSRF tricks an authenticated user's browser into executing a state-changing request on a target application (e.g., transferring funds) without their consent.",
+      explanation: "Prevent XSS by sanitizing/escaping all output. Prevent CSRF using anti-CSRF tokens and SameSite cookie attributes.",
+      difficulty: "Medium"
+    },
+    {
+      question: "What is SQL Injection (SQLi) and how do prepared statements prevent it?",
+      answer: "SQL Injection is a vulnerability where user input is concatenated directly into SQL queries, letting an attacker alter query logic to bypass login, read data, or drop tables. Prepared statements prevent SQLi by compiling the query structure first and treating parameters as literal inputs, never as executable SQL code.",
+      explanation: "Prepared statements completely eliminate SQL injection vectors.",
+      difficulty: "Easy"
+    }
+  ]
+};
+
+const getPredefinedQuestions = (title: string, category: string) => {
+  const t = (title || '').toLowerCase();
+  const c = (category || '').toLowerCase();
+  
+  if (t.includes('dbms') || t.includes('database') || c.includes('dbms')) return PREDEFINED_QUESTIONS.DBMS;
+  if (t.includes('os') || t.includes('operating system') || c.includes('operating system') || t.includes('paging') || t.includes('virtual memory')) return PREDEFINED_QUESTIONS.OS;
+  if (t.includes('cn') || t.includes('network') || c.includes('computer network') || t.includes('tcp') || t.includes('udp') || t.includes('dns')) return PREDEFINED_QUESTIONS.CN;
+  if (t.includes('react')) return PREDEFINED_QUESTIONS.React;
+  if (t.includes('next.js') || t.includes('nextjs') || t.includes('next')) return PREDEFINED_QUESTIONS.NextJs;
+  if (t.includes('api') || t.includes('apis') || t.includes('rest') || t.includes('graphql') || t.includes('grpc') || t.includes('rate limit')) return PREDEFINED_QUESTIONS.APIs;
+  if (t.includes('jwt') || t.includes('token') || t.includes('auth')) return PREDEFINED_QUESTIONS.JWT;
+  if (t.includes('postgresql') || t.includes('postgres') || t.includes('sql') || c.includes('sql')) return PREDEFINED_QUESTIONS.PostgreSQL;
+  if (t.includes('docker') || t.includes('container')) return PREDEFINED_QUESTIONS.Docker;
+  if (t.includes('kubernetes') || t.includes('k8s')) return PREDEFINED_QUESTIONS.Kubernetes;
+  if (t.includes('ml') || t.includes('machine learning')) return PREDEFINED_QUESTIONS.ML;
+  if (t.includes('dl') || t.includes('deep learning')) return PREDEFINED_QUESTIONS.DL;
+  if (t.includes('llm') || t.includes('large language') || t.includes('transformer') || t.includes('gpt')) return PREDEFINED_QUESTIONS.LLMs;
+  if (t.includes('aws') || t.includes('amazon')) return PREDEFINED_QUESTIONS.AWS;
+  if (t.includes('azure')) return PREDEFINED_QUESTIONS.Azure;
+  if (t.includes('selenium') || t.includes('webdriver')) return PREDEFINED_QUESTIONS.Selenium;
+  if (t.includes('testing') || t.includes('qa') || t.includes('test')) return PREDEFINED_QUESTIONS.Testing;
+  if (t.includes('cybersecurity') || t.includes('security') || t.includes('xss') || t.includes('csrf') || t.includes('sql injection') || t.includes('cryptography')) return PREDEFINED_QUESTIONS.Cybersecurity;
+  
+  return PREDEFINED_QUESTIONS.DBMS;
+};
+
 export default function PrepDashboard() {
   const [materials, setMaterials] = useState<any[]>([]);
   const [filteredMaterials, setFilteredMaterials] = useState<any[]>([]);
@@ -202,7 +507,10 @@ export default function PrepDashboard() {
     setSelectedMaterial(mat);
     setAiContent(null);
     setAiTitle(null);
-    setActiveQuestions(mat.questions || []);
+    
+    // Load pre-defined static questions matching this material's topic/title
+    const staticQs = getPredefinedQuestions(mat.title, mat.category);
+    setActiveQuestions(staticQs);
     setCurrentQuestionIndex(0);
     setShowAnswer(false);
     
@@ -284,47 +592,8 @@ export default function PrepDashboard() {
   };
 
   const handleGenerateQuestions = async () => {
-    if (!selectedMaterial) return;
-    setGeneratingQuestions(true);
-    const token = await getAuthValue('token');
-    if (!token) {
-      showToast('Session expired. Please log in again.', 'error');
-      setGeneratingQuestions(false);
-      return;
-    }
-    try {
-      // Use the standardized async queue endpoint
-      const res = await fetch(`${baseUrl}/prep/questions/async`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          role: selectedMaterial.title,
-          company: 'Standard',
-          difficulty: 'Intermediate',
-        })
-      });
-
-      if (!res.ok) throw new Error('Failed to start question generation');
-
-      const data = await res.json();
-      if (!data.jobId) throw new Error('No jobId returned from server');
-
-      // Poll GET /queue/status/:jobId until completed
-      const result = await pollJobStatus(data.jobId, token || '');
-      if (result.questions && result.questions.length > 0) {
-        setActiveQuestions(result.questions);
-        setCurrentQuestionIndex(0);
-        setShowAnswer(false);
-        showToast('Generated new questions!', 'success');
-      } else {
-        showToast('No questions generated', 'error');
-      }
-    } catch (err: any) {
-      console.error(err);
-      showToast(err.message || 'Generation request failed', 'error');
-    } finally {
-      setGeneratingQuestions(false);
-    }
+    // Deprecated in favor of static offline-friendly questions
+    showToast('AI generation is disabled. Using offline pre-defined questions.', 'success');
   };
 
   const handleShuffleQuestions = () => {
@@ -542,9 +811,6 @@ export default function PrepDashboard() {
                       <div className="flex gap-2">
                         <button onClick={handleShuffleQuestions} className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-bold text-neutral-300 transition-colors">
                           Shuffle
-                        </button>
-                        <button onClick={handleGenerateQuestions} disabled={generatingQuestions} className="px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 text-xs font-bold transition-colors disabled:opacity-50 flex items-center gap-2">
-                          {generatingQuestions ? <Loader2 size={12} className="animate-spin" /> : <BrainCircuit size={12} />} Generate New
                         </button>
                       </div>
                     </div>
